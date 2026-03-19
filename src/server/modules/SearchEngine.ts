@@ -11,7 +11,7 @@ import { CONFIG } from "../config.js";
 export class SearchEngine implements ISearchEngine {
   constructor(private readonly browserManager: IBrowserManager) {}
 
-  async performSearch(query: string, model?: string): Promise<string> {
+  async performSearch(query: string, model?: string, attachments?: string[]): Promise<string> {
     // Set a global timeout for the entire operation with buffer for MCP
     const operationTimeout = setTimeout(() => {
       logError("Global operation timeout reached, initiating recovery...");
@@ -61,6 +61,11 @@ export class SearchEngine implements ISearchEngine {
         // Select model if specified
         if (model) {
           await this.selectModel(page, model);
+        }
+
+        // Handle attachments if specified
+        if (attachments && attachments.length > 0) {
+          await this.uploadAttachments(page, attachments);
         }
 
         // Perform the search
@@ -434,6 +439,112 @@ export class SearchEngine implements ISearchEngine {
         error: error instanceof Error ? error.message : String(error),
       });
       return [];
+    }
+  }
+
+  async performDeepResearch(query: string, attachments?: string[]): Promise<string> {
+    const operationTimeout = setTimeout(() => {
+      logError("Global operation timeout reached, initiating recovery...");
+      this.browserManager.performRecovery().catch((err: unknown) => {
+        logError("Recovery after timeout failed:", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
+    }, CONFIG.PAGE_TIMEOUT - CONFIG.MCP_TIMEOUT_BUFFER);
+
+    try {
+      if (!this.browserManager.isReady()) {
+        await this.browserManager.initialize();
+      }
+      this.browserManager.resetIdleTimeout();
+      const ctx = this.browserManager.getPuppeteerContext();
+
+      return await retryOperation(
+        ctx,
+        async () => {
+          logInfo(`Initiating Deep Research for: "${query.substring(0, 30)}..."`);
+          await this.browserManager.navigateToPerplexity();
+
+          const page = this.browserManager.getPage();
+          if (!page) throw new Error("Page not initialized");
+
+          // 1. Activate Deep Research mode
+          logInfo("Activating Deep Research mode...");
+          const plusButtonSelector = 'button[aria-label="Add files or tools"]';
+          await page.waitForSelector(plusButtonSelector);
+          await page.click(plusButtonSelector);
+          await new Promise((r) => setTimeout(r, 1000));
+
+          const activated = await page.evaluate(() => {
+            const items = Array.from(document.querySelectorAll('[role="menuitem"], button'));
+            const target = items.find((el) => (el as HTMLElement).innerText.includes("Deep research"));
+            if (target) {
+              (target as HTMLElement).click();
+              return true;
+            }
+            return false;
+          });
+
+          if (!activated) {
+            logWarn("Deep Research option not found in menu, attempting fallback...");
+            await page.click("body"); // Close menu
+          } else {
+            logInfo("Deep Research mode activated");
+            await new Promise((r) => setTimeout(r, 1000));
+          }
+
+          // 2. Handle attachments
+          if (attachments && attachments.length > 0) {
+            await this.uploadAttachments(page, attachments);
+          }
+
+          // 3. Perform search
+          const selector = await this.browserManager.waitForSearchInput();
+          if (!selector) throw new Error("Search input not found");
+          await this.executeSearch(page, selector, query);
+
+          // 4. Extract answer
+          return await this.waitForCompleteAnswer(page);
+        },
+        CONFIG.MAX_RETRIES,
+      );
+    } catch (error) {
+      logError("Deep Research failed:", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return this.generateErrorResponse(error);
+    } finally {
+      clearTimeout(operationTimeout);
+    }
+  }
+
+  private async uploadAttachments(page: Page, filePaths: string[]): Promise<void> {
+    try {
+      logInfo(`Uploading ${filePaths.length} attachments...`);
+      const fileInputSelector = 'input[type="file"]';
+
+      // Perplexity might need the input to be present in the DOM
+      // We already found it's there, but let's make sure
+      const fileInput = await page.$(fileInputSelector);
+      if (!fileInput) {
+        logWarn("File input not found, attempting to trigger it via '+' menu...");
+        const plusButtonSelector = 'button[aria-label="Add files or tools"]';
+        await page.click(plusButtonSelector);
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+
+      const input = (await page.$(fileInputSelector)) as any;
+      if (input) {
+        await input.uploadFile(...filePaths);
+        logInfo("Files uploaded successfully, waiting for processing...");
+        await new Promise((r) => setTimeout(r, 3000)); // Wait for upload UI to update
+      } else {
+        throw new Error("File input still not found after attempt");
+      }
+    } catch (error) {
+      logError("Error uploading attachments:", {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

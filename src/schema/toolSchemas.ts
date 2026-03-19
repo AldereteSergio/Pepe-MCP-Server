@@ -7,36 +7,43 @@ export const TOOL_SCHEMAS = [
   {
     name: "chat_perplexity",
     description:
-      "Automatically call this tool for interactive, conversational queries. This tool leverages Perplexitys web search capabilities to provide real-time information and maintains conversation history using an optional chat ID for contextual follow-ups.",
+      "Pepe's interactive chat mode. Use this for conversational queries, follow-up questions, and maintaining context across multiple turns. Pepe can use specific AI models and analyze attached files to give you the best answers.",
     category: "Conversation",
-    keywords: ["chat", "conversation", "dialog", "discussion", "advice", "brainstorm", "debug"],
+    keywords: ["pepe", "chat", "conversation", "dialog", "discussion", "advice", "brainstorm", "debug"],
     use_cases: [
-      "Continuing multi-turn conversations",
-      "Context-aware question answering",
-      "Follow-up questions",
+      "Continuing multi-turn conversations with Pepe",
+      "Context-aware question answering with specific models",
+      "Analyzing files within a chat session",
     ],
     inputSchema: {
       type: "object",
       properties: {
         message: {
           type: "string",
-          description: "The message to send to Perplexity AI for web search",
+          description: "The message to send to Pepe for research.",
           examples: [
-            "Explain quantum computing",
-            "Continue our previous discussion about AI safety",
+            "Pepe, explain quantum computing",
+            "What do you think about the files I just uploaded?",
           ],
         },
         chat_id: {
           type: "string",
           description:
-            "Optional: ID of an existing chat to continue. If not provided, a new chat will be created.",
+            "Optional: ID of an existing chat to continue. If not provided, Pepe starts a new one.",
           examples: ["123e4567-e89b-12d3-a456-426614174000"],
         },
         model: {
           type: "string",
           description:
-            "Optional: The specific AI model to use (e.g., 'Claude Sonnet 4.6', 'GPT-5.4'). Use list_available_models to see current options.",
+            "Optional: The specific AI model Pepe should use (e.g., 'Claude Sonnet 4.6', 'GPT-5.4').",
           examples: ["Claude Sonnet 4.6", "GPT-5.4"],
+        },
+        attachments: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Optional: List of absolute file paths for Pepe to analyze.",
+          examples: [["/home/user/document.pdf"]],
         },
       },
       required: ["message"],
@@ -253,39 +260,45 @@ export const TOOL_SCHEMAS = [
   {
     name: "search",
     description:
-      "Performs a web search using Perplexity AI based on the provided query and desired detail level. Useful for general knowledge questions, finding information, or getting different perspectives.",
+      "Pepe's standard web search. Performs a quick and efficient search using Perplexity AI. Pepe can switch models and read your files to provide more accurate information based on your local context.",
     category: "Web Search",
-    keywords: ["search", "web", "internet", "query", "find", "information", "lookup", "perplexity"],
+    keywords: ["pepe", "search", "web", "internet", "query", "find", "information", "lookup"],
     use_cases: [
-      "Answering general knowledge questions.",
-      "Finding specific information online.",
-      "Getting quick summaries or detailed explanations.",
-      "Researching topics.",
+      "Answering general knowledge questions with Pepe's help.",
+      "Finding specific information online using Pro models.",
+      "Researching topics with attached documents.",
     ],
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: "The search query or question to ask Perplexity.",
-          examples: ["What is the capital of France?", "Explain black holes"],
+          description: "The search query or question for Pepe.",
+          examples: ["Pepe, what is the capital of France?", "Analyze this image for me"],
         },
         detail_level: {
           type: "string",
           enum: ["brief", "normal", "detailed"],
-          description: "Optional: Controls the level of detail in the response (default: normal).",
+          description: "Optional: How much detail should Pepe provide (default: normal).",
           examples: ["brief", "detailed"],
         },
         model: {
           type: "string",
           description:
-            "Optional: The specific AI model to use (e.g., 'Claude Sonnet 4.6', 'GPT-5.4'). Use list_available_models to see current options.",
+            "Optional: The specific AI model Pepe should use.",
           examples: ["Claude Sonnet 4.6", "GPT-5.4"],
+        },
+        attachments: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Optional: List of absolute file paths for Pepe to upload.",
+          examples: [["/home/user/image.jpg"]],
         },
         stream: {
           type: "boolean",
           description:
-            "Optional: Enable streaming response for large documentation queries (default: false).",
+            "Optional: Enable streaming response for a more dynamic experience (default: false).",
           examples: [true, false],
         },
       },
@@ -311,21 +324,59 @@ export const TOOL_SCHEMAS = [
   {
     name: "list_available_models",
     description:
-      "Lists the AI models currently available in your Perplexity account (e.g., Claude, GPT-4, etc.). Useful to see which models you can pass to the 'model' parameter in search or chat tools.",
+      "Pepe lists all AI models currently available in your Perplexity Pro account. Use this to see which models Pepe can use for your searches (Claude, GPT, Gemini, etc.).",
     category: "Configuration",
-    keywords: ["models", "list", "available", "config", "options", "perplexity"],
-    use_cases: ["Checking available models", "Verifying Pro account features"],
+    keywords: ["pepe", "models", "list", "available", "config", "options"],
+    use_cases: ["Checking which models Pepe can use", "Verifying Pro account features"],
     inputSchema: {
       type: "object",
       properties: {},
     },
     examples: [
       {
-        description: "List all models",
+        description: "Ask Pepe for available models",
         input: {},
         output: {
           models: ["Sonar", "GPT-5.4", "Claude Sonnet 4.6", "Gemini 3.1 Pro"],
         },
+      },
+    ],
+    related_tools: ["search", "chat_perplexity"],
+  },
+  {
+    name: "deep_research",
+    description:
+      "Pepe's intensive research mode. Performs a multi-step, deep investigation on complex topics. Pepe will explore more sources and provide a comprehensive report. Note: Pepe handles the model selection automatically in this mode.",
+    category: "Web Search",
+    keywords: ["pepe", "deep", "research", "comprehensive", "intensive", "thorough"],
+    use_cases: [
+      "In-depth market research with Pepe",
+      "Complex technical investigations",
+      "Comprehensive topic analysis by Pepe",
+    ],
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "The complex topic for Pepe to investigate deeply.",
+          examples: ["Pepe, do a deep analysis of solid-state batteries future"],
+        },
+        attachments: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Optional: List of absolute file paths for Pepe's deep research.",
+          examples: [["/home/user/data.csv"]],
+        },
+      },
+      required: ["query"],
+    },
+    examples: [
+      {
+        description: "Pepe performing deep research",
+        input: { query: "Investigate the impact of AI on software engineering productivity in 2025" },
+        output: { response: "Detailed research report from Pepe..." },
       },
     ],
     related_tools: ["search", "chat_perplexity"],

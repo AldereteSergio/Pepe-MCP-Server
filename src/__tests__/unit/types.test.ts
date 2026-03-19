@@ -120,6 +120,7 @@ describe("Type Definitions", () => {
     it("should define ISearchEngine interface", () => {
       const searchEngine: ISearchEngine = {
         performSearch: async () => "result",
+        performDeepResearch: async () => "deep result",
         listAvailableModels: async () => ["model1"],
       };
 

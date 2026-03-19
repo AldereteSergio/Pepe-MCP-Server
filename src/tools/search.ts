@@ -11,12 +11,14 @@ export default async function search(
   args: {
     query: string;
     detail_level?: "brief" | "normal" | "detailed";
+    model?: string;
+    attachments?: string[];
     stream?: boolean;
   },
   ctx: PuppeteerContext,
-  performSearch: (prompt: string, ctx: PuppeteerContext) => Promise<string>,
+  performSearch: (prompt: string, ctx: PuppeteerContext, model?: string, attachments?: string[]) => Promise<string>,
 ): Promise<string | AsyncGenerator<string, void, unknown>> {
-  const { query, detail_level = "normal", stream = false } = args;
+  const { query, detail_level = "normal", model, attachments, stream = false } = args;
 
   let prompt = query;
   switch (detail_level) {
@@ -32,11 +34,12 @@ export default async function search(
 
   // If streaming is not requested, return traditional response
   if (!stream) {
-    return await performSearch(prompt, ctx);
+    return await performSearch(prompt, ctx, model, attachments);
   }
 
   // Return real streaming generator that monitors browser automation
-  return realTimeStreamingSearch(prompt, ctx, performSearch);
+  // Note: model and attachments are passed to performSearch within the generator
+  return realTimeStreamingSearch(prompt, ctx, (p, c) => performSearch(p, c, model, attachments));
 }
 
 // Helper functions for streaming search

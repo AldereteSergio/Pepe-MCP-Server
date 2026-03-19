@@ -4,7 +4,8 @@
 
 // ─── SEARCH ENGINE INTERFACE ──────────────────────────────────────────
 export interface ISearchEngine {
-  performSearch(query: string, model?: string): Promise<string>;
+  performSearch(query: string, model?: string, attachments?: string[]): Promise<string>;
+  performDeepResearch(query: string, attachments?: string[]): Promise<string>;
   listAvailableModels(): Promise<string[]>;
 }
 
@@ -33,6 +34,12 @@ export interface ChatPerplexityArgs {
   message: string;
   chat_id?: string;
   model?: string;
+  attachments?: string[];
+}
+
+export interface DeepResearchArgs {
+  query: string;
+  attachments?: string[];
 }
 
 export interface ExtractUrlContentArgs {
@@ -59,12 +66,14 @@ export interface SearchArgs {
   query: string;
   detail_level?: "brief" | "normal" | "detailed";
   model?: string;
+  attachments?: string[];
 }
 
 // ─── UNION TYPES ──────────────────────────────────────────────────────
 export type ToolArgs =
   | ListAvailableModelsArgs
   | ChatPerplexityArgs
+  | DeepResearchArgs
   | ExtractUrlContentArgs
   | GetDocumentationArgs
   | FindApisArgs

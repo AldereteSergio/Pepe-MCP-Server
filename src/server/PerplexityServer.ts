@@ -19,6 +19,9 @@ import { createToolHandlersRegistry, setupToolHandlers } from "./toolHandlerSetu
 // Import modular tool implementations
 import chatPerplexity from "../tools/chatPerplexity.js";
 import extractUrlContent from "../tools/extractUrlContent.js";
+import search from "../tools/search.js";
+import deepResearch from "../tools/deepResearch.js";
+import listAvailableModels from "../tools/listAvailableModels.js";
 
 export class PerplexityServer {
   private readonly server: Server;
@@ -97,10 +100,19 @@ export class PerplexityServer {
 
   // Tool handler implementations
   private async handleChatPerplexity(args: Record<string, unknown>): Promise<string> {
-    const typedArgs = args as { message: string; chat_id?: string; model?: string };
+    const typedArgs = args as {
+      message: string;
+      chat_id?: string;
+      model?: string;
+      attachments?: string[];
+    };
 
     // Use modular search engine
-    const searchResult = await this.searchEngine.performSearch(typedArgs.message, typedArgs.model);
+    const searchResult = await this.searchEngine.performSearch(
+      typedArgs.message,
+      typedArgs.model,
+      typedArgs.attachments,
+    );
 
     // Use modular database manager
     const getChatHistoryFn = (chatId: string) => this.databaseManager.getChatHistory(chatId);
@@ -113,7 +125,7 @@ export class PerplexityServer {
     return await chatPerplexity(
       typedArgs,
       {} as never, // Context not needed with modular approach
-      (prompt, _ctx, model) => this.searchEngine.performSearch(prompt, model),
+      (prompt, _ctx, model, attachments) => this.searchEngine.performSearch(prompt, model, attachments),
       getChatHistoryFn,
       saveChatMessageFn,
     );
@@ -148,15 +160,36 @@ export class PerplexityServer {
       query: string;
       detail_level?: "brief" | "normal" | "detailed";
       model?: string;
+      attachments?: string[];
       stream?: boolean;
     };
 
-    return await this.searchEngine.performSearch(typedArgs.query, typedArgs.model);
+    const ctx = this.createPuppeteerContext();
+    const result = await search(
+      typedArgs,
+      ctx,
+      (prompt, _ctx, model, attachments) => this.searchEngine.performSearch(prompt, model, attachments)
+    );
+
+    return typeof result === "string" ? result : "Streaming is handled via transport";
+  }
+
+  private async handleDeepResearch(args: Record<string, unknown>): Promise<string> {
+    const typedArgs = args as {
+      query: string;
+      attachments?: string[];
+    };
+
+    const ctx = this.createPuppeteerContext();
+    return await deepResearch(
+      typedArgs,
+      ctx,
+      (query, attachments) => this.searchEngine.performDeepResearch(query, attachments)
+    );
   }
 
   private async handleListAvailableModels(_args: Record<string, unknown>): Promise<string> {
-    const models = await this.searchEngine.listAvailableModels();
-    return JSON.stringify({ models }, null, 2);
+    return await listAvailableModels({}, () => this.searchEngine.listAvailableModels());
   }
 
   private async handleExtractUrlContent(args: Record<string, unknown>): Promise<string> {
@@ -187,6 +220,7 @@ export class PerplexityServer {
       search: this.handleSearch.bind(this),
       extract_url_content: this.handleExtractUrlContent.bind(this),
       list_available_models: this.handleListAvailableModels.bind(this),
+      deep_research: this.handleDeepResearch.bind(this),
     });
 
     setupToolHandlers(this.server, toolHandlers);
