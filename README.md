@@ -1,141 +1,141 @@
-# Perplexity MCP Zerver
+# Perplexity MCP Zerver (Español)
 
-A minimalist research server implementing the Model Context Protocol (MCP) to deliver AI-powered research capabilities through Perplexity's web interface.
+Un servidor de investigación minimalista que implementa el Protocolo de Contexto de Modelo (MCP) para ofrecer capacidades de investigación potenciadas por IA a través de la interfaz web de Perplexity.
 
-[![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-333)]()
-[![TypeScript Codebase](https://img.shields.io/badge/TypeScript-Codebase-333)]()
-[![Tests Passing](https://img.shields.io/badge/Tests-Passing-333)]()
-[![Bun Runtime](https://img.shields.io/badge/Runtime-Bun-333)]()
+[![Compatible con MCP](https://img.shields.io/badge/MCP-Compatible-333)]()
+[![Base de código en TypeScript](https://img.shields.io/badge/TypeScript-Codebase-333)]()
+[![Pruebas superadas](https://img.shields.io/badge/Tests-Passing-333)]()
+[![Entorno Node.js](https://img.shields.io/badge/Runtime-Node.js-333)]()
 
-## Research Capabilities
+## Capacidades de Investigación
 
-- **Intelligent Web Research**: Search and summarize content without API limits
-- **Persistent Conversations**: Maintain context with local SQLite chat storage
-- **Content Extraction**: Clean article extraction with GitHub repository parsing
-- **Developer Tooling**: Documentation retrieval, API discovery, code analysis
-- **Keyless Operation**: Browser automation replaces API key requirements
+- **Investigación Web Inteligente**: Busca y resume contenido sin límites de API.
+- **Conversaciones Persistentes**: Mantén el contexto con almacenamiento local de chat en SQLite.
+- **Extracción de Contenido**: Extracción limpia de artículos con soporte para repositorios de GitHub.
+- **Herramientas para Desarrolladores**: Recuperación de documentación, descubrimiento de APIs y análisis de código.
+- **Operación sin llaves**: La automatización del navegador reemplaza el requisito de llaves API.
 
 ---
 
-## Available Tools
+## Herramientas Disponibles
 
-### Search (`search`)
-Perform research queries with configurable depth  
-*Returns raw text results*
+### Buscar (`search`)
+Realiza consultas de investigación con profundidad configurable.  
+*Devuelve resultados en texto plano.*
 
-### Get Documentation (`get_documentation`)
-Retrieve technical documentation with examples  
-*Returns structured documentation*
+### Obtener Documentación (`get_documentation`)
+Recupera documentación técnica con ejemplos.  
+*Devuelve documentación estructurada.*
 
-### Find APIs (`find_apis`)
-Discover relevant APIs for development needs  
-*Returns API listings and descriptions*
+### Encontrar APIs (`find_apis`)
+Descubre APIs relevantes para necesidades de desarrollo.  
+*Devuelve listados de APIs y descripciones.*
 
-### Check Deprecated Code (`check_deprecated_code`)
-Analyze code snippets for outdated patterns  
-*Returns analysis report*
+### Revisar Código Depreciado (`check_deprecated_code`)
+Analiza fragmentos de código en busca de patrones obsoletos.  
+*Devuelve un reporte de análisis.*
 
-### Extract URL Content (`extract_url_content`)
-Parse web content with automatic GitHub handling  
-*Returns structured content metadata*
+### Extraer Contenido de URL (`extract_url_content`)
+Analiza contenido web con manejo automático de GitHub.  
+*Devuelve metadatos de contenido estructurado.*
 
 ### Chat (`chat_perplexity`)
-Persistent conversations with context history  
-*Returns conversation state in JSON format*
+Conversaciones persistentes con historial de contexto.  
+*Devuelve el estado de la conversación en formato JSON.*
 
 ---
 
-## Getting Started
+## Comenzando
 
-### Prerequisites
-- Bun runtime
-- Node.js 18+ (for TypeScript compilation)
+### Requisitos Previos
+- Node.js 18+ (Recomendado v20+)
+- npm (incluido con Node.js)
 
-### Installation
+### Instalación
 ```bash
-git clone https://github.com/wysh3/perplexity-mcp-zerver.git
-cd perplexity-mcp-zerver
-bun install
-bun run build
+git clone https://github.com/tu-usuario/perple.git
+cd perple
+npm install
+npm run build
 ```
 
-### Configuration
-Add to your MCP configuration file:
+### Configuración
+Añade esto a tu archivo de configuración de MCP (ej. `mcp.json` en Cursor):
 ```json
 {
   "mcpServers": {
-    "perplexity-server": {
-      "command": "bun",
-      "args": ["/absolute/path/to/build/main.js"],
+    "perple": {
+      "command": "node",
+      "args": ["/ruta/absoluta/a/perple/build/main.js"],
       "timeout": 300
     }
   }
 }
 ```
 
-### Usage
-Initiate commands through your MCP client:
-- "Use perplexity to research quantum computing advancements"
-- "Ask perplexity-server for React 18 documentation"
-- "Begin conversation with perplexity about neural networks"
+### Uso
+Inicia comandos a través de tu cliente MCP:
+- "Usa perplexity para investigar avances en computación cuántica"
+- "Pregunta a perple por la documentación de React 18"
+- "Inicia una conversación con perplexity sobre redes neuronales"
 
 ---
 
-## 🔐 Pro Account Support (Optional)
+## 🔐 Soporte para Cuentas Pro (Opcional)
 
-Use your Perplexity Pro subscription for access to better models (GPT-5.1, Claude Sonnet 4.5) and higher limits.
+Usa tu suscripción de Perplexity Pro para acceder a mejores modelos (Claude 3.5 Sonnet, GPT-4o) y límites más altos.
 
-### One-Time Setup
+### Configuración Única
 ```bash
-bun run build
-bun run login
+npm run build
+npm run login
 ```
 
-A browser window will open. **Log in using email** (recommended for best compatibility), then close the browser. Your session is now saved!
+Se abrirá una ventana del navegador. **Inicia sesión usando correo electrónico** (recomendado para mejor compatibilidad), luego cierra el navegador. ¡Tu sesión quedará guardada!
 
-> **Note**: Google/SSO login may work but email login is more reliable with the browser automation.
+> **Nota**: El inicio de sesión con Google/SSO puede funcionar, pero el correo electrónico es más confiable con la automatización del navegador.
 
-### Environment Variables
+### Variables de Entorno
 
-| Variable | Default | Description |
+| Variable | Por defecto | Descripción |
 |----------|---------|-------------|
-| `PERPLEXITY_BROWSER_DATA_DIR` | `~/.perplexity-mcp` | Browser profile directory |
-| `PERPLEXITY_PERSISTENT_PROFILE` | `true` | Set to `false` for anonymous mode |
+| `PERPLEXITY_BROWSER_DATA_DIR` | `~/.perplexity-mcp` | Directorio del perfil del navegador |
+| `PERPLEXITY_PERSISTENT_PROFILE` | `true` | Cambia a `false` para modo anónimo |
 
 ---
 
-## Technical Comparison
+## Comparativa Técnica
 
-| Feature              | This Implementation | Traditional APIs |
-|----------------------|---------------------|------------------|
-| Authentication       | None required       | API keys         |
-| Cost                 | Free                | Usage-based      |
-| Data Privacy         | Local processing    | Remote servers   |
-| GitHub Integration   | Native support      | Limited          |
-| History Persistence  | SQLite storage      | Session-based    |
-
----
-
-## Troubleshooting
-
-**Server Connection Issues**
-1. Verify absolute path in configuration
-2. Confirm Node.js installation with `node -v`
-3. Ensure build completed successfully
-
-**Content Extraction**
-- GitHub paths must use full repository URLs
-- Adjust link recursion depth in source configuration
+| Característica       | Esta Implementación | APIs Tradicionales |
+|----------------------|---------------------|-------------------|
+| Autenticación        | No requerida        | Llaves API        |
+| Costo                | Gratis              | Basado en uso     |
+| Privacidad de Datos  | Procesamiento local | Servidores remotos|
+| Integración GitHub   | Soporte nativo      | Limitado          |
+| Persistencia Historial| Almacenamiento SQLite| Basado en sesión  |
 
 ---
 
-## Origins & License
+## Solución de Problemas
+
+**Problemas de Conexión del Servidor**
+1. Verifica la ruta absoluta en la configuración.
+2. Confirma la instalación de Node.js con `node -v`.
+3. Asegúrate de que la compilación terminó con éxito (`npm run build`).
+
+**Extracción de Contenido**
+- Las rutas de GitHub deben usar URLs completas del repositorio.
+- Ajusta la profundidad de recursión de enlaces en la configuración de origen.
+
+---
+
+## Orígenes y Licencia
  
-based on - [DaInfernalCoder/perplexity-researcher-mcp](https://github.com/DaInfernalCoder/perplexity-researcher-mcp)  
-refactored from - [sm-moshi/docshunter](https://github.com/sm-moshi/docshunter)  
+Basado en - [DaInfernalCoder/perplexity-researcher-mcp](https://github.com/DaInfernalCoder/perplexity-researcher-mcp)  
+Refactorizado de - [sm-moshi/docshunter](https://github.com/sm-moshi/docshunter)  
 
-Licensed under **GNU GPL v3.0** - [View License](LICENSE)
+Licenciado bajo **GNU GPL v3.0** - [Ver Licencia](LICENSE)
 
 ---
 
-> This project interfaces with Perplexity via browser automation. Use responsibly and ethically. Stability depends on Perplexity's website consistency. Educational use only.
+> Este proyecto interactúa con Perplexity a través de la automatización del navegador. Úsalo de manera responsable y ética. La estabilidad depende de la consistencia del sitio web de Perplexity. Solo para uso educativo.
