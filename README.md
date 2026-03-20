@@ -1,4 +1,4 @@
-# 🐸 Pepe: Perplexity MCP Zerver (Español)
+# 🐸 Pepe: Pepe-MCP-Server (Español)
 
 Un servidor de investigación de alta densidad que implementa el Protocolo de Contexto de Modelo (MCP) para ofrecer capacidades de investigación potenciadas por IA a través de la interfaz web de Perplexity.
 
@@ -22,6 +22,9 @@ Un servidor de investigación de alta densidad que implementa el Protocolo de Co
 ## Capacidades de Investigación
 
 - **Investigación Web Inteligente**: Busca y resume contenido sin límites de API.
+- **Deep Research**: Modo de investigación profunda y multi-paso para reportes de élite.
+- **Selección de Modelos Pro**: Elige entre Claude 3.5 Sonnet, GPT-4o, Sonar y más.
+- **Archivos Adjuntos**: Sube imágenes o documentos para que Pepe los analice.
 - **Conversaciones Persistentes**: Mantén el contexto con almacenamiento local de chat en SQLite.
 - **Extracción de Contenido**: Extracción limpia de artículos con soporte para repositorios de GitHub.
 - **Herramientas para Desarrolladores**: Recuperación de documentación, descubrimiento de APIs y análisis de código.
@@ -32,28 +35,31 @@ Un servidor de investigación de alta densidad que implementa el Protocolo de Co
 ## Herramientas Disponibles
 
 ### Buscar (`search`)
-Realiza consultas de investigación con profundidad configurable.  
-*Devuelve resultados en texto plano.*
+Investigación web de alta densidad.  
+*Requiere SCQA + Primeros Principios. Soporta modelos y archivos adjuntos.*
+
+### Investigación Profunda (`deep_research`)
+El modo más potente de Pepe para análisis exhaustivos.  
+*Ideal para reportes estratégicos y de mercado.*
+
+### Modo Chat (`chat_perplexity`)
+Conversaciones interactivas manteniendo el hilo y contexto histórico.  
+*Soporta modelos Pro y archivos adjuntos.*
+
+### Listar Modelos (`list_available_models`)
+Muestra los modelos de IA disponibles en tu cuenta de Perplexity.
 
 ### Obtener Documentación (`get_documentation`)
-Recupera documentación técnica con ejemplos.  
-*Devuelve documentación estructurada.*
+Recupera documentación técnica oficial y ejemplos de implementación.
 
 ### Encontrar APIs (`find_apis`)
-Descubre APIs relevantes para necesidades de desarrollo.  
-*Devuelve listados de APIs y descripciones.*
+Descubre y compara APIs externas para tus necesidades técnicas.
 
 ### Revisar Código Depreciado (`check_deprecated_code`)
-Analiza fragmentos de código en busca de patrones obsoletos.  
-*Devuelve un reporte de análisis.*
+Audita fragmentos de código en busca de patrones obsoletos o deuda técnica.
 
 ### Extraer Contenido de URL (`extract_url_content`)
-Analiza contenido web con manejo automático de GitHub.  
-*Devuelve metadatos de contenido estructurado.*
-
-### Chat (`chat_perplexity`)
-Conversaciones persistentes con historial de contexto.  
-*Devuelve el estado de la conversación en formato JSON.*
+Extractor de contenido puro (limpio de anuncios) con soporte para GitHub.
 
 ---
 
@@ -74,22 +80,37 @@ Las descripciones de las herramientas están optimizadas para forzar este compor
 - Node.js 18+ (Recomendado v20+)
 - npm (incluido con Node.js)
 
-### Instalación
+### Instalación Rápida (npx)
+No necesitas clonar el repositorio. Puedes usar a Pepe directamente en tu configuración de MCP:
+
+```json
+{
+  "mcpServers": {
+    "pepe": {
+      "command": "npx",
+      "args": ["-y", "github:AldereteSergio/Pepe-MCP-Server"],
+      "timeout": 300
+    }
+  }
+}
+```
+
+### Instalación Manual (Desarrollo)
 ```bash
-git clone https://github.com/tu-usuario/perple.git
-cd perple
+git clone https://github.com/AldereteSergio/Pepe-MCP-Server.git
+cd Pepe-MCP-Server
 npm install
 npm run build
 ```
 
-### Configuración
+### Configuración Manual
 Añade esto a tu archivo de configuración de MCP (ej. `mcp.json` en Cursor):
 ```json
 {
   "mcpServers": {
-    "perple": {
+    "pepe": {
       "command": "node",
-      "args": ["/ruta/absoluta/a/perple/build/main.js"],
+      "args": ["/ruta/absoluta/a/Pepe-MCP-Server/build/main.js"],
       "timeout": 300
     }
   }
@@ -154,8 +175,7 @@ Se abrirá una ventana del navegador. **Inicia sesión usando correo electrónic
 
 ## Orígenes y Licencia
  
-Basado en - [DaInfernalCoder/perplexity-researcher-mcp](https://github.com/DaInfernalCoder/perplexity-researcher-mcp)  
-Refactorizado de - [sm-moshi/docshunter](https://github.com/sm-moshi/docshunter)  
+Basado en - [wysh3/perplexity-mcp-zerver](https://github.com/wysh3/perplexity-mcp-zerver)  
 
 Licenciado bajo **GNU GPL v3.0** - [Ver Licencia](LICENSE)
 

@@ -1,8 +1,11 @@
 {
-  "name": "perplexity-mcp-zerver",
-  "version": "0.3.1",
-  "description": "MCP server using Puppeteer to interact with Perplexity.ai without an API key.",
+  "name": "pepe-mcp",
+  "version": "0.4.0",
+  "description": "Pepe: El servidor MCP de Perplexity de alta densidad con SCQA + Primeros Principios.",
   "main": "build/main.js",
+  "bin": {
+    "pepe": "./build/main.js"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node build/main.js",
