@@ -1,0 +1,178 @@
+/**
+ * Tool implementation for web search functionality with real streaming support
+ */
+/**
+ * Handles web search with configurable detail levels and optional streaming
+ */
+export default async function search(args, ctx, performSearch) {
+    const { query, model, attachments, stream = false } = args;
+    // Pepe is now a raw executioner. The agent is responsible for high-quality prompting.
+    const prompt = query;
+    // If streaming is not requested, return traditional response
+    if (!stream) {
+        return await performSearch(prompt, ctx, model, attachments);
+    }
+    // Return real streaming generator that monitors browser automation
+    // Note: model and attachments are passed to performSearch within the generator
+    return realTimeStreamingSearch(prompt, ctx, (p, c) => performSearch(p, c, model, attachments));
+}
+// Helper functions for streaming search
+async function* streamBrowserSetup(ctx) {
+    yield "🌐 Initializing browser connection...\n";
+    if (!ctx.browser || !ctx.page || ctx.page?.isClosed()) {
+        yield "🔧 Setting up browser instance...\n";
+    }
+    else {
+        yield "✅ Browser ready, navigating to Perplexity...\n";
+    }
+}
+async function* streamSearchInitiation(prompt) {
+    yield "📡 Connecting to Perplexity AI...\n";
+    yield `⌨️  Submitting query: "${prompt.substring(0, 100)}${prompt.length > 100 ? "..." : ""}"\n\n`;
+}
+async function* streamSearchExecution(prompt, ctx, performSearch) {
+    let searchCompleted = false;
+    let finalResult = "";
+    // Monitor content while search is running
+    const monitoringTask = monitorPageContent(ctx);
+    // Start both search and monitoring
+    const searchTask = performSearch(prompt, ctx).then((result) => {
+        searchCompleted = true;
+        finalResult = result;
+        return result;
+    });
+    // Stream monitoring updates while search runs
+    for await (const contentUpdate of monitoringTask) {
+        if (searchCompleted)
+            break;
+        yield contentUpdate;
+    }
+    // Ensure search is complete
+    await searchTask;
+    if (finalResult) {
+        yield* streamSearchResults(finalResult);
+    }
+}
+async function* streamSearchResults(result) {
+    yield "\n\n📋 **Search Results:**\n\n";
+    // Stream the final result in chunks for better UX
+    const chunkSize = 300;
+    for (let i = 0; i < result.length; i += chunkSize) {
+        const chunk = result.slice(i, i + chunkSize);
+        yield chunk;
+        // Small delay to maintain streaming feel
+        await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+}
+async function* streamFallbackSearch(prompt, ctx, performSearch) {
+    yield "⚠️  Streaming unavailable, falling back to standard search...\n\n";
+    const result = await performSearch(prompt, ctx);
+    yield result;
+}
+function formatStreamingError(error) {
+    const errorMessage = error instanceof Error && error.message ? error.message : "Unknown error";
+    return `\n\n❌ **Search failed:** ${errorMessage}\n💡 **Tip:** Try a more specific query or check your connection.\n`;
+}
+/**
+ * Real-time streaming search implementation that monitors browser automation
+ * and streams content as it arrives from Perplexity
+ */
+async function* realTimeStreamingSearch(prompt, ctx, performSearch) {
+    yield "🔍 **Starting documentation search...**\n\n";
+    try {
+        // Stream browser setup status
+        yield* streamBrowserSetup(ctx);
+        // Check if page is available for streaming
+        if (ctx.page && !ctx.page.isClosed()) {
+            yield* streamSearchInitiation(prompt);
+            yield* streamSearchExecution(prompt, ctx, performSearch);
+        }
+        else {
+            yield* streamFallbackSearch(prompt, ctx, performSearch);
+        }
+        yield "\n\n✅ **Search completed successfully!**";
+    }
+    catch (error) {
+        yield formatStreamingError(error);
+        throw error;
+    }
+}
+function createContentCheck() {
+    return `
+    const proseElements = document.querySelectorAll(
+      '.prose, [class*="prose"], [class*="answer"], [class*="result"]'
+    );
+    let totalLength = 0;
+
+    for (const element of proseElements) {
+      totalLength += (element.innerText?.length || 0);
+    }
+
+    return {
+      hasContent: totalLength > 0,
+      contentLength: totalLength,
+      hasInputField: !!document.querySelector('textarea[placeholder*="Ask"]'),
+      pageState: document.readyState,
+    };
+  `;
+}
+async function checkPageContent(ctx) {
+    if (!ctx.page || ctx.page.isClosed())
+        return null;
+    try {
+        return (await ctx.page.evaluate(createContentCheck()));
+    }
+    catch {
+        return null;
+    }
+}
+function generateProgressUpdate(contentCheck, lastContentLength, startTime) {
+    if (contentCheck.hasInputField && !contentCheck.hasContent) {
+        if (Date.now() - startTime > 2000) {
+            return "⏳ Waiting for AI response...\n";
+        }
+    }
+    else if (contentCheck.hasContent && contentCheck.contentLength > lastContentLength) {
+        const status = lastContentLength === 0 ? " (response started)" : " (updating)";
+        return `📝 Content loading${status}...\n`;
+    }
+    return null;
+}
+function shouldBreakMonitoring(contentCheck) {
+    return contentCheck.contentLength > 200 && contentCheck.pageState === "complete";
+}
+/**
+ * Monitor page content for real-time updates during search
+ */
+async function* monitorPageContent(ctx) {
+    if (!ctx.page || ctx.page.isClosed())
+        return;
+    try {
+        let lastContentLength = 0;
+        const maxMonitoringTime = 10000; // 10 seconds max monitoring
+        const startTime = Date.now();
+        while (Date.now() - startTime < maxMonitoringTime) {
+            const contentCheck = await checkPageContent(ctx);
+            if (!contentCheck) {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                continue;
+            }
+            // Generate progress update if needed
+            const progressUpdate = generateProgressUpdate(contentCheck, lastContentLength, startTime);
+            if (progressUpdate) {
+                yield progressUpdate;
+                lastContentLength = contentCheck.contentLength;
+            }
+            // Check if monitoring should break early
+            if (shouldBreakMonitoring(contentCheck)) {
+                yield "🎯 Response ready, finalizing...\n";
+                break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 500)); // Check every 500ms
+        }
+    }
+    catch (error) {
+        // Monitoring failed, but don't break the main search
+        yield "⚠️  Live monitoring unavailable, search continuing...\n";
+    }
+}

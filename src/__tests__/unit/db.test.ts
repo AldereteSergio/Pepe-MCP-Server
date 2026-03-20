@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import type Database from "better-sqlite3";
 import type { ChatMessage } from "../../types/index.js";
 import * as dbModule from "../../utils/db.js";
 
@@ -68,7 +67,7 @@ describe("Database Utilities", () => {
     it("should create required tables when initializing database", () => {
       const mockDb = createMockDatabase();
 
-      dbModule.initializeDatabase(mockDb as unknown as Database);
+      dbModule.initializeDatabase(mockDb as any);
 
       expect(mockDb.exec).toHaveBeenCalledTimes(2);
       expect(mockDb.exec).toHaveBeenCalledWith(
@@ -82,7 +81,7 @@ describe("Database Utilities", () => {
     it("should create tables with correct schema", () => {
       const mockDb = createMockDatabase();
 
-      dbModule.initializeDatabase(mockDb as unknown as Database);
+      dbModule.initializeDatabase(mockDb as any);
 
       // Verify chats table structure
       expect(mockDb.exec).toHaveBeenCalledWith(expect.stringContaining("id TEXT PRIMARY KEY"));
@@ -105,7 +104,7 @@ describe("Database Utilities", () => {
       const mockDb = createMockDatabase();
 
       // Initialize database and add some test data
-      dbModule.initializeDatabase(mockDb as unknown as Database);
+      dbModule.initializeDatabase(mockDb as any);
 
       const chatId = "test-chat-123";
       const testMessages: ChatMessage[] = [
@@ -116,11 +115,11 @@ describe("Database Utilities", () => {
 
       // Save test messages
       testMessages.forEach((msg) => {
-        dbModule.saveChatMessage(mockDb as unknown as Database, chatId, msg);
+        dbModule.saveChatMessage(mockDb as any, chatId, msg);
       });
 
       // Retrieve chat history
-      const history = dbModule.getChatHistory(mockDb as unknown as Database, chatId);
+      const history = dbModule.getChatHistory(mockDb as any, chatId);
 
       expect(history).toHaveLength(3);
       expect(history[0]).toEqual(testMessages[0]);
@@ -134,7 +133,7 @@ describe("Database Utilities", () => {
     it("should return empty array for non-existent chat ID", () => {
       const mockDb = createMockDatabase();
 
-      const history = dbModule.getChatHistory(mockDb as unknown as Database, "non-existent-chat");
+      const history = dbModule.getChatHistory(mockDb as any, "non-existent-chat");
 
       expect(history).toEqual([]);
       expect(Array.isArray(history)).toBe(true);
@@ -143,7 +142,7 @@ describe("Database Utilities", () => {
     it("should return messages ordered by creation time", () => {
       const mockDb = createMockDatabase();
 
-      dbModule.initializeDatabase(mockDb as unknown as Database);
+      dbModule.initializeDatabase(mockDb as any);
 
       const chatId = "ordered-test-chat";
       const messagesInOrder: ChatMessage[] = [
@@ -154,10 +153,10 @@ describe("Database Utilities", () => {
 
       // Save messages in order
       messagesInOrder.forEach((msg) => {
-        dbModule.saveChatMessage(mockDb as unknown as Database, chatId, msg);
+        dbModule.saveChatMessage(mockDb as any, chatId, msg);
       });
 
-      const history = dbModule.getChatHistory(mockDb as unknown as Database, chatId);
+      const history = dbModule.getChatHistory(mockDb as any, chatId);
 
       expect(history).toHaveLength(3);
       expect(history[0]?.content).toBe("First message");
@@ -170,12 +169,12 @@ describe("Database Utilities", () => {
     it("should save user message to database", () => {
       const mockDb = createMockDatabase();
 
-      dbModule.initializeDatabase(mockDb as unknown as Database);
+      dbModule.initializeDatabase(mockDb as any);
 
       const chatId = "save-user-test";
       const message: ChatMessage = { role: "user", content: "Test user message" };
 
-      dbModule.saveChatMessage(mockDb as unknown as Database, chatId, message);
+      dbModule.saveChatMessage(mockDb as any, chatId, message);
 
       expect(mockDb.prepare).toHaveBeenCalledWith(
         expect.stringContaining("INSERT OR IGNORE INTO chats"),
@@ -186,12 +185,12 @@ describe("Database Utilities", () => {
     it("should save assistant message to database", () => {
       const mockDb = createMockDatabase();
 
-      dbModule.initializeDatabase(mockDb as unknown as Database);
+      dbModule.initializeDatabase(mockDb as any);
 
       const chatId = "save-assistant-test";
       const message: ChatMessage = { role: "assistant", content: "Test assistant response" };
 
-      dbModule.saveChatMessage(mockDb as unknown as Database, chatId, message);
+      dbModule.saveChatMessage(mockDb as any, chatId, message);
 
       expect(mockDb.prepare).toHaveBeenCalledWith(
         expect.stringContaining("INSERT OR IGNORE INTO chats"),
@@ -202,20 +201,20 @@ describe("Database Utilities", () => {
     it("should create chat record if it doesn't exist when saving message", () => {
       const mockDb = createMockDatabase();
 
-      dbModule.initializeDatabase(mockDb as unknown as Database);
+      dbModule.initializeDatabase(mockDb as any);
 
       const chatId = "new-chat-test";
       const message: ChatMessage = { role: "user", content: "First message in new chat" };
 
       // Before saving, chat should not exist
-      let history = dbModule.getChatHistory(mockDb as unknown as Database, chatId);
+      let history = dbModule.getChatHistory(mockDb as any, chatId);
       expect(history).toEqual([]);
 
       // Save message (should create chat)
-      dbModule.saveChatMessage(mockDb as unknown as Database, chatId, message);
+      dbModule.saveChatMessage(mockDb as any, chatId, message);
 
       // After saving, chat should exist with the message
-      history = dbModule.getChatHistory(mockDb as unknown as Database, chatId);
+      history = dbModule.getChatHistory(mockDb as any, chatId);
       expect(history).toHaveLength(1);
       expect(history[0]).toEqual(message);
     });
@@ -223,15 +222,15 @@ describe("Database Utilities", () => {
     it("should prevent duplicate chat creation", () => {
       const mockDb = createMockDatabase();
 
-      dbModule.initializeDatabase(mockDb as unknown as Database);
+      dbModule.initializeDatabase(mockDb as any);
 
       const chatId = "duplicate-test";
       const message1: ChatMessage = { role: "user", content: "First message" };
       const message2: ChatMessage = { role: "assistant", content: "Response" };
 
       // Save two messages to the same chat
-      dbModule.saveChatMessage(mockDb as unknown as Database, chatId, message1);
-      dbModule.saveChatMessage(mockDb as unknown as Database, chatId, message2);
+      dbModule.saveChatMessage(mockDb as any, chatId, message1);
+      dbModule.saveChatMessage(mockDb as any, chatId, message2);
 
       // Should have called INSERT OR IGNORE twice but should only create chat once
       const prepareCalls = (mockDb.prepare as any).mock.calls;
@@ -247,7 +246,7 @@ describe("Database Utilities", () => {
     it("should handle special characters in message content", () => {
       const mockDb = createMockDatabase();
 
-      dbModule.initializeDatabase(mockDb as unknown as Database);
+      dbModule.initializeDatabase(mockDb as any);
 
       const chatId = "special-chars-test";
       const messageWithSpecialChars: ChatMessage = {
@@ -255,8 +254,8 @@ describe("Database Utilities", () => {
         content: "Message with 'quotes', \"double quotes\", and \n newlines",
       };
 
-      dbModule.saveChatMessage(mockDb as unknown as Database, chatId, messageWithSpecialChars);
-      const history = dbModule.getChatHistory(mockDb as unknown as Database, chatId);
+      dbModule.saveChatMessage(mockDb as any, chatId, messageWithSpecialChars);
+      const history = dbModule.getChatHistory(mockDb as any, chatId);
 
       expect(history).toHaveLength(1);
       expect(history[0]).toEqual(messageWithSpecialChars);
@@ -265,13 +264,13 @@ describe("Database Utilities", () => {
     it("should handle empty message content", () => {
       const mockDb = createMockDatabase();
 
-      dbModule.initializeDatabase(mockDb as unknown as Database);
+      dbModule.initializeDatabase(mockDb as any);
 
       const chatId = "empty-content-test";
       const emptyMessage: ChatMessage = { role: "user", content: "" };
 
-      dbModule.saveChatMessage(mockDb as unknown as Database, chatId, emptyMessage);
-      const history = dbModule.getChatHistory(mockDb as unknown as Database, chatId);
+      dbModule.saveChatMessage(mockDb as any, chatId, emptyMessage);
+      const history = dbModule.getChatHistory(mockDb as any, chatId);
 
       expect(history).toHaveLength(1);
       expect(history[0]).toEqual(emptyMessage);
