@@ -95,6 +95,8 @@ No necesitas clonar el repositorio. Puedes usar a Pepe directamente en tu config
 }
 ```
 
+> **Nota para Windows/WSL**: `npx` descargará y ejecutará Pepe directamente usando `ts-node` sobre el código fuente de TypeScript. No necesitas compilar nada manualmente.
+
 ### Instalación Manual (Desarrollo)
 ```bash
 git clone https://github.com/AldereteSergio/Pepe-MCP-Server.git
