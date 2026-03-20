@@ -4,7 +4,7 @@
   "description": "Pepe: El servidor MCP de Perplexity de alta densidad con SCQA + Primeros Principios.",
   "main": "src/main.ts",
   "bin": {
-    "pepe": "./src/main.ts"
+    "pepe": "./node_modules/.bin/ts-node --esm src/main.ts"
   },
   "scripts": {
     "build": "tsc",
