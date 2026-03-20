@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { existsSync, mkdirSync } from "node:fs";
 import { CONFIG } from "./server/config.js";
 import { initializeBrowser } from "./utils/puppeteer.js";
