@@ -22,6 +22,9 @@ import extractUrlContent from "../tools/extractUrlContent.js";
 import search from "../tools/search.js";
 import deepResearch from "../tools/deepResearch.js";
 import listAvailableModels from "../tools/listAvailableModels.js";
+import getDocumentation from "../tools/getDocumentation.js";
+import findApis from "../tools/findApis.js";
+import checkDeprecatedCode from "../tools/checkDeprecatedCode.js";
 
 export class PerplexityServer {
   private readonly server: Server;
@@ -132,27 +135,33 @@ export class PerplexityServer {
   }
 
   private async handleGetDocumentation(args: Record<string, unknown>): Promise<string> {
-    const typedArgs = args as { query: string; context?: string };
-    const searchResult = await this.searchEngine.performSearch(
-      `Documentation for ${typedArgs.query}: ${typedArgs.context || ""}`,
+    const typedArgs = args as { query: string };
+    const ctx = this.createPuppeteerContext();
+    return await getDocumentation(
+      typedArgs,
+      ctx,
+      (prompt, _ctx) => this.searchEngine.performSearch(prompt)
     );
-    return searchResult;
   }
 
   private async handleFindApis(args: Record<string, unknown>): Promise<string> {
-    const typedArgs = args as { requirement: string; context?: string };
-    const searchResult = await this.searchEngine.performSearch(
-      `Find APIs for ${typedArgs.requirement}: ${typedArgs.context || ""}`,
+    const typedArgs = args as { query: string };
+    const ctx = this.createPuppeteerContext();
+    return await findApis(
+      typedArgs,
+      ctx,
+      (prompt, _ctx) => this.searchEngine.performSearch(prompt)
     );
-    return searchResult;
   }
 
   private async handleCheckDeprecatedCode(args: Record<string, unknown>): Promise<string> {
-    const typedArgs = args as { code: string; technology?: string };
-    const searchResult = await this.searchEngine.performSearch(
-      `Check if this ${typedArgs.technology || "code"} is deprecated: ${typedArgs.code}`,
+    const typedArgs = args as { query: string };
+    const ctx = this.createPuppeteerContext();
+    return await checkDeprecatedCode(
+      typedArgs,
+      ctx,
+      (prompt, _ctx) => this.searchEngine.performSearch(prompt)
     );
-    return searchResult;
   }
 
   private async handleSearch(args: Record<string, unknown>): Promise<string> {

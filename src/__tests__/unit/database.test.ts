@@ -25,19 +25,18 @@ vi.mock("node:url", () => ({
   fileURLToPath: vi.fn().mockReturnValue("/mock/path/to/module.js"),
 }));
 
-// Mock bun:sqlite
-vi.mock("bun:sqlite", () => {
+// Mock better-sqlite3
+vi.mock("better-sqlite3", () => {
   const mockStmt = {
     all: vi.fn(),
     run: vi.fn(),
   };
 
   return {
-    Database: vi.fn().mockImplementation(() => ({
+    default: vi.fn().mockImplementation(() => ({
       close: vi.fn(),
       exec: vi.fn(),
       prepare: vi.fn().mockReturnValue(mockStmt),
-      query: vi.fn().mockReturnValue(mockStmt),
     })),
   };
 });

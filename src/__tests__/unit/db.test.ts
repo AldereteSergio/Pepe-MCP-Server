@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Database } from "bun:sqlite";
+import type Database from "better-sqlite3";
 import type { ChatMessage } from "../../types/index.js";
 import * as dbModule from "../../utils/db.js";
 
@@ -25,9 +25,10 @@ describe("Database Utilities", () => {
           tables["messages"] = tables["messages"] || [];
         }
       }),
-      query: vi.fn((sql: string) => ({
-        all: vi.fn((chatId: string) => {
+      prepare: vi.fn((sql: string) => ({
+        all: vi.fn((...params: any[]) => {
           if (sql.includes("SELECT role, content FROM messages")) {
+            const chatId = params[0];
             // Return mock chat history
             return (
               tables["messages"]
@@ -37,8 +38,6 @@ describe("Database Utilities", () => {
           }
           return [];
         }),
-      })),
-      prepare: vi.fn((sql: string) => ({
         run: vi.fn((...params: any[]) => {
           if (sql.includes("INSERT OR IGNORE INTO chats")) {
             const chatId = params[0];
@@ -127,7 +126,7 @@ describe("Database Utilities", () => {
       expect(history[0]).toEqual(testMessages[0]);
       expect(history[1]).toEqual(testMessages[1]);
       expect(history[2]).toEqual(testMessages[2]);
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.prepare).toHaveBeenCalledWith(
         expect.stringContaining("SELECT role, content FROM messages"),
       );
     });

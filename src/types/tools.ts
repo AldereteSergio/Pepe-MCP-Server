@@ -49,17 +49,14 @@ export interface ExtractUrlContentArgs {
 
 export interface GetDocumentationArgs {
   query: string;
-  context?: string;
 }
 
 export interface FindApisArgs {
-  requirement: string;
-  context?: string;
+  query: string;
 }
 
 export interface CheckDeprecatedCodeArgs {
-  code: string;
-  technology?: string;
+  query: string;
 }
 
 export interface SearchArgs {

@@ -4,7 +4,7 @@ import { TOOL_SCHEMAS } from "../../schema/toolSchemas.js";
 describe("Tool Schemas", () => {
   describe("Schema Structure Validation", () => {
     it("should have all required tools", () => {
-      expect(TOOL_SCHEMAS).toHaveLength(7);
+      expect(TOOL_SCHEMAS).toHaveLength(8);
 
       const toolNames = TOOL_SCHEMAS.map((schema) => schema.name);
       expect(toolNames).toContain("chat_perplexity");

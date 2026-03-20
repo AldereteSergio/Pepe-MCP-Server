@@ -1,11 +1,23 @@
-# Perplexity MCP Zerver (Español)
+# 🐸 Pepe: Perplexity MCP Zerver (Español)
 
-Un servidor de investigación minimalista que implementa el Protocolo de Contexto de Modelo (MCP) para ofrecer capacidades de investigación potenciadas por IA a través de la interfaz web de Perplexity.
+Un servidor de investigación de alta densidad que implementa el Protocolo de Contexto de Modelo (MCP) para ofrecer capacidades de investigación potenciadas por IA a través de la interfaz web de Perplexity.
 
 [![Compatible con MCP](https://img.shields.io/badge/MCP-Compatible-333)]()
 [![Base de código en TypeScript](https://img.shields.io/badge/TypeScript-Codebase-333)]()
 [![Pruebas superadas](https://img.shields.io/badge/Tests-Passing-333)]()
 [![Entorno Node.js](https://img.shields.io/badge/Runtime-Node.js-333)]()
+
+## 📌 Índice
+1. [Capacidades de Investigación](#capacidades-de-investigación)
+2. [Herramientas Disponibles (Pepe Tools)](#herramientas-disponibles)
+3. [Filosofía SCQA + Primeros Principios](#filosofía-scqa--primeros-principios)
+4. [Comenzando (Instalación y Configuración)](#comenzando)
+5. [Soporte para Cuentas Pro](#-soporte-para-cuentas-pro-opcional)
+6. [Comparativa Técnica](#comparativa-técnica)
+7. [Solución de Problemas](#solución-de-problemas)
+8. [🚀 Roadmap y Visión Futura](ROADMAP.md)
+
+---
 
 ## Capacidades de Investigación
 
@@ -42,6 +54,17 @@ Analiza contenido web con manejo automático de GitHub.
 ### Chat (`chat_perplexity`)
 Conversaciones persistentes con historial de contexto.  
 *Devuelve el estado de la conversación en formato JSON.*
+
+---
+
+## Filosofía SCQA + Primeros Principios
+
+Pepe no es un buscador convencional; es un **ejecutor de planes de investigación**. Para obtener resultados de élite, el agente (tú) debe aplicar:
+
+1.  **SCQA**: Definir la **S**ituación, la **C**omplicación, la **Q**ueja (Pregunta) y la **A**cción (Respuesta esperada).
+2.  **Primeros Principios**: Deconstruir problemas complejos en sus verdades fundamentales antes de investigar.
+
+Las descripciones de las herramientas están optimizadas para forzar este comportamiento en los modelos de lenguaje.
 
 ---
 

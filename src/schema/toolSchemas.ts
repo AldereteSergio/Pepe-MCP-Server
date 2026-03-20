@@ -7,110 +7,91 @@ export const TOOL_SCHEMAS = [
   {
     name: "chat_perplexity",
     description:
-      "Pepe's interactive chat mode. Use this for conversational queries, follow-up questions, and maintaining context across multiple turns. Pepe can use specific AI models and analyze attached files to give you the best answers.",
+      "Modo chat interactivo de Pepe. OBLIGATORIO PARA EL AGENTE: Aplicar SCQA para mantener la coherencia del hilo. Deconstruir la intención del usuario y proporcionar respuestas basadas en hechos frescos de la web. Pepe mantiene el historial; tu consulta debe ser un paso lógico en la investigación continua, integrando archivos adjuntos si es necesario.",
     category: "Conversation",
-    keywords: ["pepe", "chat", "conversation", "dialog", "discussion", "advice", "brainstorm", "debug"],
+    keywords: ["pepe", "chat", "conversacion", "dialogo", "discusion", "historial", "contexto"],
     use_cases: [
-      "Continuing multi-turn conversations with Pepe",
-      "Context-aware question answering with specific models",
-      "Analyzing files within a chat session",
+      "Continuar conversaciones de varios turnos con Pepe.",
+      "Análisis iterativo de temas complejos.",
+      "Discutir y profundizar en archivos subidos.",
     ],
     inputSchema: {
       type: "object",
       properties: {
         message: {
           type: "string",
-          description: "The message to send to Pepe for research.",
+          description: "El mensaje para Pepe. Debe ser parte de un plan de investigación.",
           examples: [
-            "Pepe, explain quantum computing",
-            "What do you think about the files I just uploaded?",
+            "Pepe, analiza los puntos de fricción en este mercado según lo que hablamos.",
           ],
         },
         chat_id: {
           type: "string",
           description:
-            "Optional: ID of an existing chat to continue. If not provided, Pepe starts a new one.",
+            "Opcional: ID de un chat existente. Si no se proporciona, Pepe inicia uno nuevo.",
           examples: ["123e4567-e89b-12d3-a456-426614174000"],
         },
         model: {
           type: "string",
           description:
-            "Optional: The specific AI model Pepe should use (e.g., 'Claude Sonnet 4.6', 'GPT-5.4').",
+            "Opcional: El modelo de IA específico que Pepe debe usar (ej. 'Claude Sonnet 4.6').",
           examples: ["Claude Sonnet 4.6", "GPT-5.4"],
         },
         attachments: {
           type: "array",
           items: { type: "string" },
           description:
-            "Optional: List of absolute file paths for Pepe to analyze.",
-          examples: [["/home/user/document.pdf"]],
+            "Opcional: Lista de rutas de archivos absolutas para que Pepe analice en el chat.",
+          examples: [["/home/user/documento.pdf"]],
         },
       },
       required: ["message"],
     },
     examples: [
       {
-        description: "Simple question",
-        input: { message: "Explain quantum computing basics" },
+        description: "Pregunta con contexto",
+        input: { message: "Pepe, ¿cómo afecta esto a nuestra situación actual?" },
         output: {
-          chat_id: "new-chat-id",
-          response: "Quantum computing uses qubits that can exist in superposition...",
-        },
-      },
-      {
-        description: "Continuing conversation",
-        input: {
-          message: "How does that compare to classical computing?",
-          chat_id: "existing-chat-id",
-        },
-        output: {
-          chat_id: "existing-chat-id",
-          response: "Classical computers use bits that are either 0 or 1, while quantum...",
+          chat_id: "nuevo-id",
+          response: "Basado en la situación analizada...",
         },
       },
     ],
-    related_tools: ["search", "get_documentation"],
+    related_tools: ["search", "deep_research"],
   },
   {
     name: "extract_url_content",
     description:
-      "Uses browser automation (Puppeteer) and Mozilla's Readability library to extract the main article text content from a given URL. Handles dynamic JavaScript rendering and includes fallback logic. For GitHub repository URLs, it attempts to fetch structured content via gitingest.com. Performs a pre-check for non-HTML content types and checks HTTP status after navigation. Ideal for getting clean text from articles/blog posts. **Note: May struggle to isolate only core content on complex homepages or dashboards, potentially including UI elements.**",
+      "Extractor de contenido puro de Pepe. OBLIGATORIO PARA EL AGENTE: Usar cuando necesites datos crudos de una URL específica para alimentar tu análisis SCQA. Pepe limpia el ruido (anuncios, menús) y extrae el núcleo del texto. Soporta repositorios de GitHub.",
     category: "Information Extraction",
     keywords: [
-      "extract",
+      "pepe",
+      "extraer",
       "url",
-      "website",
-      "content",
-      "scrape",
-      "summarize",
-      "webpage",
-      "fetch",
-      "readability",
-      "article",
-      "dom",
-      "puppeteer",
+      "web",
+      "contenido",
+      "limpiar",
+      "articulo",
       "github",
-      "gitingest",
-      "repository",
+      "scraping",
     ],
     use_cases: [
-      "Getting the main text of a news article or blog post.",
-      "Summarizing web page content.",
-      "Extracting documentation text.",
-      "Providing website context to other models.",
+      "Obtener el texto limpio de una noticia o blog.",
+      "Analizar el README o código de un repo de GitHub.",
+      "Proveer contexto real de una web a Pepe.",
     ],
     inputSchema: {
       type: "object",
       properties: {
         url: {
           type: "string",
-          description: "The URL of the website to extract content from.",
-          examples: ["https://www.example.com/article"],
+          description: "La URL de la cual Pepe debe extraer el contenido.",
+          examples: ["https://www.ejemplo.com/articulo"],
         },
         depth: {
           type: "number",
           description:
-            "Optional: Maximum depth for recursive link exploration (1-5). Default is 1 (no recursion).",
+            "Opcional: Profundidad de exploración de enlaces (1-5). Por defecto 1.",
           minimum: 1,
           maximum: 5,
           default: 1,
@@ -121,20 +102,11 @@ export const TOOL_SCHEMAS = [
     },
     examples: [
       {
-        description: "Successful extraction from an article",
-        input: { url: "https://example-article-url.com" },
+        description: "Extracción de artículo",
+        input: { url: "https://ejemplo.com/noticia" },
         output: {
           status: "Success",
-          rootUrl: "https://example-article-url.com",
-          explorationDepth: 1,
-          pagesExplored: 1,
-          content: [
-            {
-              url: "https://example-article-url.com",
-              title: "Example Article Title",
-              textContent: "The main body text of the article...",
-            },
-          ],
+          content: [{ title: "Título", textContent: "Contenido..." }],
         },
       },
     ],
@@ -143,32 +115,31 @@ export const TOOL_SCHEMAS = [
   {
     name: "get_documentation",
     description:
-      'Automatically call this tool when working with unfamiliar APIs/libraries, needing usage examples, or checking version specifics as this can access web. Example: When adding a payment gateway, ask "Get Stripe API documentation for creating charges".',
+      "Recuperador de documentación técnica de Pepe. OBLIGATORIO PARA EL AGENTE: Aplicar SCQA para identificar qué falta en tu conocimiento técnico. Pepe busca fuentes oficiales y ejemplos de uso actualizados para resolver complicaciones de implementación.",
     category: "Technical Reference",
-    keywords: ["docs", "documentation", "api", "reference", "examples", "usage", "version"],
-    use_cases: ["Learning new technologies", "API integration", "Troubleshooting code"],
+    keywords: ["pepe", "docs", "documentacion", "api", "referencia", "ejemplos", "libreria"],
+    use_cases: [
+      "Aprender nuevas tecnologías.",
+      "Resolver errores de código con docs actualizadas.",
+      "Encontrar ejemplos de implementación.",
+    ],
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: "The technology, library, or API to get documentation for",
-          examples: ["React hooks", "Python pandas", "REST API best practices"],
-        },
-        context: {
-          type: "string",
-          description: "Additional context or specific aspects to focus on",
-          examples: ["focus on performance optimization", "include TypeScript examples"],
+          description: "El plan de investigación técnica detallado para Pepe.",
+          examples: ["SITUATION: ... COMPLICATION: ... OBJECTIVES: ..."],
         },
       },
       required: ["query"],
     },
     examples: [
       {
-        description: "Basic documentation request",
-        input: { query: "React useEffect hook" },
+        description: "Búsqueda de documentación",
+        input: { query: "SITUATION: Uso de React Hooks... OBJECTIVES: 1. Encontrar ejemplos de useEffect..." },
         output: {
-          response: "The useEffect hook lets you perform side effects in function components...",
+          response: "El hook useEffect permite realizar efectos secundarios...",
         },
       },
     ],
@@ -177,39 +148,33 @@ export const TOOL_SCHEMAS = [
   {
     name: "find_apis",
     description:
-      'Automatically call this tool when needing external services or real time current data (like API info, latest versions, etc.) from web. Compares options based on requirements. Example: When building a shopping site, ask "Find product image APIs with free tiers".',
+      "Descubridor de APIs de Pepe. OBLIGATORIO PARA EL AGENTE: Aplicar SCQA para definir el problema técnico que la API debe resolver. Pepe busca y compara opciones externas basadas en tus requerimientos de negocio y técnicos.",
     category: "API Discovery",
-    keywords: ["api", "integration", "services", "endpoints", "sdk", "data", "external"],
+    keywords: ["pepe", "api", "integracion", "servicios", "endpoints", "sdk", "externo"],
     use_cases: [
-      "Finding APIs for specific functionality",
-      "Comparing API alternatives",
-      "Evaluating API suitability",
+      "Encontrar alternativas a servicios existentes.",
+      "Evaluar APIs por costo o funcionalidad.",
+      "Descubrir herramientas para nuevas features.",
     ],
     inputSchema: {
       type: "object",
       properties: {
-        requirement: {
+        query: {
           type: "string",
-          description: "The functionality or requirement you are looking to fulfill",
-          examples: ["image recognition", "payment processing", "geolocation services"],
-        },
-        context: {
-          type: "string",
-          description: "Additional context about the project or specific needs",
-          examples: ["prefer free tier options", "must support Python SDK"],
+          description: "El plan de descubrimiento de APIs detallado para Pepe.",
+          examples: ["SITUATION: ... COMPLICATION: ... OBJECTIVES: ..."],
         },
       },
-      required: ["requirement"],
+      required: ["query"],
     },
     examples: [
       {
-        description: "Finding payment APIs",
+        description: "Búsqueda de APIs de pago",
         input: {
-          requirement: "payment processing",
-          context: "needs Stripe alternative",
+          query: "SITUATION: Necesidad de pagos en Latam... OBJECTIVES: 1. Comparar Stripe vs locales...",
         },
         output: {
-          response: "PayPal offers global payment processing with 2.9% + $0.30 per transaction...",
+          response: "PayPal ofrece procesamiento global...",
         },
       },
     ],
@@ -218,40 +183,33 @@ export const TOOL_SCHEMAS = [
   {
     name: "check_deprecated_code",
     description:
-      "Automatically call this tool when reviewing legacy code, planning upgrades, or encountering warnings with real time web access. Helps identify technical debt. Example: During code reviews or before upgrading dependencies.",
+      "Auditor de código de Pepe. OBLIGATORIO PARA EL AGENTE: Aplicar SCQA para entender el contexto del legado y los riesgos de la deuda técnica. Pepe verifica contra la web si existen mejores alternativas o si el código es obsoleto.",
     category: "Code Analysis",
-    keywords: ["deprecation", "migration", "upgrade", "compatibility", "linting", "legacy", "debt"],
+    keywords: ["pepe", "depreciado", "obsoleto", "migracion", "upgrade", "deuda-tecnica"],
     use_cases: [
-      "Preparing for technology upgrades",
-      "Maintaining backward compatibility",
-      "Identifying technical debt",
+      "Preparar actualizaciones de dependencias.",
+      "Identificar patrones de código antiguos.",
+      "Asegurar compatibilidad futura.",
     ],
     inputSchema: {
       type: "object",
       properties: {
-        code: {
+        query: {
           type: "string",
-          description: "The code snippet or dependency to check",
-          examples: ["componentWillMount()", "var instead of let/const"],
-        },
-        technology: {
-          type: "string",
-          description: 'The technology or framework context (e.g., "React", "Node.js")',
-          examples: ["React 16", "Python 2.7", "Node.js 12"],
+          description: "El plan de auditoría de código detallado para Pepe, incluyendo el fragmento de código.",
+          examples: ["SITUATION: Código legacy en React... COMPLICATION: componentWillMount..."],
         },
       },
-      required: ["code"],
+      required: ["query"],
     },
     examples: [
       {
-        description: "React lifecycle method deprecation",
+        description: "Auditoría de React",
         input: {
-          code: "componentWillMount() {\n  // initialization code\n}",
-          technology: "React",
+          query: "SITUATION: Migración a React 18... COMPLICATION: Uso de componentWillMount... OBJECTIVES: ...",
         },
         output: {
-          response:
-            "componentWillMount is deprecated in React 17+. Use constructor or componentDidMount instead...",
+          response: "componentWillMount está depreciado en React 17+...",
         },
       },
     ],
@@ -260,84 +218,76 @@ export const TOOL_SCHEMAS = [
   {
     name: "search",
     description:
-      "Pepe's High-Density Web Research. MANDATORY FOR AGENT: Apply SCQA + First Principles. Deconstruct the user's request into atomic research points. Define Situation, Complication, and specific Objectives. Pepe is a raw browser executioner; your query must be a professional, structured research plan, not a simple question.",
+      "Investigación web de alta densidad de Pepe. OBLIGATORIO PARA EL AGENTE: Aplicar SCQA + Primeros principios. Deconstruir la solicitud del usuario en puntos de investigación atómicos. Definir Situación, Complicación y Objetivos. Pepe es un ejecutor puro; tu consulta debe ser un plan de investigación profesional, no una simple pregunta.",
     category: "Web Search",
-    keywords: ["pepe", "search", "web", "internet", "query", "find", "information", "lookup"],
+    keywords: ["pepe", "search", "busqueda", "web", "investigar", "informacion", "encontrar"],
     use_cases: [
-      "Answering general knowledge questions with Pepe's help.",
-      "Finding specific information online using Pro models.",
-      "Researching topics with attached documents.",
+      "Responder preguntas complejas con datos frescos.",
+      "Validar hipótesis con información en tiempo real.",
+      "Investigar mercados o tendencias con archivos adjuntos.",
     ],
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: "The search query or question for Pepe.",
-          examples: ["Pepe, what is the capital of France?", "Analyze this image for me"],
+          description: "El plan de investigación detallado para Pepe.",
+          examples: ["SITUATION: ... COMPLICATION: ... OBJECTIVES: ..."],
         },
         detail_level: {
           type: "string",
           enum: ["brief", "normal", "detailed"],
-          description: "Optional: How much detail should Pepe provide (default: normal).",
+          description: "Opcional: Nivel de detalle del reporte de Pepe.",
           examples: ["brief", "detailed"],
         },
         model: {
           type: "string",
-          description:
-            "Optional: The specific AI model Pepe should use.",
-          examples: ["Claude Sonnet 4.6", "GPT-5.4"],
+          description: "Opcional: Modelo Pro a usar (ej. 'Claude Sonnet 4.6').",
+          examples: ["Claude Sonnet 4.6"],
         },
         attachments: {
           type: "array",
           items: { type: "string" },
-          description:
-            "Optional: List of absolute file paths for Pepe to upload.",
-          examples: [["/home/user/image.jpg"]],
+          description: "Opcional: Rutas de archivos para que Pepe suba.",
+          examples: [["/home/user/imagen.jpg"]],
         },
         stream: {
           type: "boolean",
-          description:
-            "Optional: Enable streaming response for a more dynamic experience (default: false).",
-          examples: [true, false],
+          description: "Opcional: Habilitar streaming (por defecto false).",
+          examples: [true],
         },
       },
       required: ["query"],
     },
     examples: [
       {
-        description: "Simple search query",
-        input: { query: "What is the weather in London?" },
-        output: { response: "The weather in London is currently..." },
-      },
-      {
-        description: "Detailed search query",
-        input: { query: "Explain the theory of relativity", detail_level: "detailed" },
-        output: {
-          response:
-            "Albert Einstein's theory of relativity includes Special Relativity and General Relativity...",
-        },
+        description: "Búsqueda estructurada",
+        input: { query: "SITUATION: Mercado X... OBJECTIVES: 1. Analizar precios..." },
+        output: { response: "Análisis completo del mercado X..." },
       },
     ],
-    related_tools: ["chat_perplexity", "get_documentation", "find_apis"],
+    related_tools: ["chat_perplexity", "deep_research"],
   },
   {
     name: "list_available_models",
     description:
-      "Pepe lists all AI models currently available in your Perplexity Pro account. Use this to see which models Pepe can use for your searches (Claude, GPT, Gemini, etc.).",
+      "Lista de modelos Pro de Pepe. Úsalo para saber qué motores de IA tienes disponibles en tu cuenta de Perplexity (Claude, GPT, Gemini, etc.) antes de lanzar una búsqueda avanzada con Pepe.",
     category: "Configuration",
-    keywords: ["pepe", "models", "list", "available", "config", "options"],
-    use_cases: ["Checking which models Pepe can use", "Verifying Pro account features"],
+    keywords: ["pepe", "modelos", "lista", "disponibles", "configuracion", "opciones"],
+    use_cases: [
+      "Verificar qué modelos Pro puede usar Pepe.",
+      "Confirmar acceso a funciones premium.",
+    ],
     inputSchema: {
       type: "object",
       properties: {},
     },
     examples: [
       {
-        description: "Ask Pepe for available models",
+        description: "Listar modelos",
         input: {},
         output: {
-          models: ["Sonar", "GPT-5.4", "Claude Sonnet 4.6", "Gemini 3.1 Pro"],
+          models: ["Sonar", "GPT-5.4", "Claude Sonnet 4.6"],
         },
       },
     ],
@@ -346,37 +296,36 @@ export const TOOL_SCHEMAS = [
   {
     name: "deep_research",
     description:
-      "Pepe's intensive research mode. Performs a multi-step, deep investigation on complex topics. Pepe will explore more sources and provide a comprehensive report. Note: Pepe handles the model selection automatically in this mode.",
+      "Investigación profunda y multi-paso de Pepe. OBLIGATORIO PARA EL AGENTE: Aplicar SCQA + Primeros principios de forma exhaustiva. Este es el modo de mayor potencia; tu consulta debe ser un diseño de investigación completo. Pepe explorará múltiples fuentes para generar un reporte de élite.",
     category: "Web Search",
-    keywords: ["pepe", "deep", "research", "comprehensive", "intensive", "thorough"],
+    keywords: ["pepe", "deep", "research", "profundo", "intensivo", "reporte", "analisis"],
     use_cases: [
-      "In-depth market research with Pepe",
-      "Complex technical investigations",
-      "Comprehensive topic analysis by Pepe",
+      "Análisis de mercado de alto nivel.",
+      "Investigaciones técnicas complejas.",
+      "Generación de reportes estratégicos detallados.",
     ],
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: "The complex topic for Pepe to investigate deeply.",
-          examples: ["Pepe, do a deep analysis of solid-state batteries future"],
+          description: "El diseño de investigación completo para Pepe.",
+          examples: ["SITUATION: ... COMPLICATION: ... OBJECTIVES: ..."],
         },
         attachments: {
           type: "array",
           items: { type: "string" },
-          description:
-            "Optional: List of absolute file paths for Pepe's deep research.",
-          examples: [["/home/user/data.csv"]],
+          description: "Opcional: Rutas de archivos para la investigación profunda de Pepe.",
+          examples: [["/home/user/datos.csv"]],
         },
       },
       required: ["query"],
     },
     examples: [
       {
-        description: "Pepe performing deep research",
-        input: { query: "Investigate the impact of AI on software engineering productivity in 2025" },
-        output: { response: "Detailed research report from Pepe..." },
+        description: "Deep research estratégico",
+        input: { query: "SITUATION: Expansión Latam... OBJECTIVES: 1. Evaluar competidores..." },
+        output: { response: "Reporte estratégico de élite..." },
       },
     ],
     related_tools: ["search", "chat_perplexity"],

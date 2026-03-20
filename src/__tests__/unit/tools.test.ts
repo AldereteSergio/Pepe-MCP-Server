@@ -100,6 +100,8 @@ describe("Tools", () => {
       expect(mockPerformSearch).toHaveBeenCalledWith(
         expect.stringContaining("Hello, world!"),
         mockCtx,
+        undefined,
+        undefined,
       );
       expect(result).toBe("Mock response");
     });
@@ -126,6 +128,8 @@ describe("Tools", () => {
       expect(mockPerformSearch).toHaveBeenCalledWith(
         expect.stringContaining("Previous message"),
         mockCtx,
+        undefined,
+        undefined,
       );
       expect(result).toBe("New response");
     });
@@ -160,8 +164,10 @@ describe("Tools", () => {
       const result = await search(args, mockCtx, mockPerformSearch);
 
       expect(mockPerformSearch).toHaveBeenCalledWith(
-        expect.stringContaining("Provide a clear, balanced answer to: test query"),
+        "test query",
         mockCtx,
+        undefined,
+        undefined,
       );
       expect(result).toBe("Normal search result");
     });
@@ -175,8 +181,10 @@ describe("Tools", () => {
       const result = await search(args, mockCtx, mockPerformSearch);
 
       expect(mockPerformSearch).toHaveBeenCalledWith(
-        expect.stringContaining("Provide a brief, concise answer to: test query"),
+        "test query",
         mockCtx,
+        undefined,
+        undefined,
       );
       expect(result).toBe("Brief search result");
     });
@@ -190,8 +198,10 @@ describe("Tools", () => {
       const result = await search(args, mockCtx, mockPerformSearch);
 
       expect(mockPerformSearch).toHaveBeenCalledWith(
-        expect.stringContaining("Provide a comprehensive, detailed analysis of: test query"),
+        "test query",
         mockCtx,
+        undefined,
+        undefined,
       );
       expect(result).toBe("Detailed search result");
     });
@@ -218,8 +228,10 @@ describe("Tools", () => {
       const result = await search(args, mockCtx, mockPerformSearch);
 
       expect(mockPerformSearch).toHaveBeenCalledWith(
-        expect.stringContaining("Provide a clear, balanced answer to: test query"),
+        "test query",
         mockCtx,
+        undefined,
+        undefined,
       );
       expect(result).toBe("Default search result");
     });
@@ -349,27 +361,10 @@ describe("Tools", () => {
       const result = await getDocumentation(args, mockCtx, mockPerformSearch);
 
       expect(mockPerformSearch).toHaveBeenCalledWith(
-        expect.stringContaining(
-          "Provide comprehensive documentation and usage examples for React hooks",
-        ),
+        "React hooks",
         mockCtx,
       );
       expect(result).toBe("Documentation result");
-    });
-
-    it("should handle documentation query with context", async () => {
-      const { default: getDocumentation } = await import("../../tools/getDocumentation.js");
-
-      const mockPerformSearch = vi.fn().mockResolvedValue("Documentation with context result");
-
-      const args = { query: "React hooks", context: "focus on performance optimization" };
-      const result = await getDocumentation(args, mockCtx, mockPerformSearch);
-
-      expect(mockPerformSearch).toHaveBeenCalledWith(
-        expect.stringContaining("Focus on: focus on performance optimization"),
-        mockCtx,
-      );
-      expect(result).toBe("Documentation with context result");
     });
   });
 
@@ -379,29 +374,14 @@ describe("Tools", () => {
 
       const mockPerformSearch = vi.fn().mockResolvedValue("API discovery result");
 
-      const args = { requirement: "image recognition" };
+      const args = { query: "image recognition" };
       const result = await findApis(args, mockCtx, mockPerformSearch);
 
       expect(mockPerformSearch).toHaveBeenCalledWith(
-        expect.stringContaining("Find and evaluate APIs that could be used for: image recognition"),
+        "image recognition",
         mockCtx,
       );
       expect(result).toBe("API discovery result");
-    });
-
-    it("should handle API discovery with context", async () => {
-      const { default: findApis } = await import("../../tools/findApis.js");
-
-      const mockPerformSearch = vi.fn().mockResolvedValue("API discovery with context result");
-
-      const args = { requirement: "payment processing", context: "prefer free tier options" };
-      const result = await findApis(args, mockCtx, mockPerformSearch);
-
-      expect(mockPerformSearch).toHaveBeenCalledWith(
-        expect.stringContaining("Context: prefer free tier options"),
-        mockCtx,
-      );
-      expect(result).toBe("API discovery with context result");
     });
   });
 
@@ -411,32 +391,14 @@ describe("Tools", () => {
 
       const mockPerformSearch = vi.fn().mockResolvedValue("Deprecation check result");
 
-      const args = { code: "componentWillMount()" };
+      const args = { query: "componentWillMount()" };
       const result = await checkDeprecatedCode(args, mockCtx, mockPerformSearch);
 
       expect(mockPerformSearch).toHaveBeenCalledWith(
-        expect.stringContaining("componentWillMount()"),
+        "componentWillMount()",
         mockCtx,
       );
       expect(result).toBe("Deprecation check result");
-    });
-
-    it("should handle deprecated code checking with technology context", async () => {
-      const { default: checkDeprecatedCode } = await import("../../tools/checkDeprecatedCode.js");
-
-      const mockPerformSearch = vi
-        .fn()
-        .mockResolvedValue("Deprecation check with tech context result");
-
-      const args = { code: "var instead of let/const", technology: "React 16" };
-      const result = await checkDeprecatedCode(args, mockCtx, mockPerformSearch);
-
-      expect(mockPerformSearch).toHaveBeenCalledWith(
-        expect.stringContaining("var instead of let/const"),
-        mockCtx,
-      );
-      expect(mockPerformSearch).toHaveBeenCalledWith(expect.stringContaining("React 16"), mockCtx);
-      expect(result).toBe("Deprecation check with tech context result");
     });
   });
 });
