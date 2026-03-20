@@ -7,7 +7,7 @@
     "pepe": "dist/index.js"
   },
   "scripts": {
-    "build": "ncc build src/main.ts -o dist --minify --no-cache --external better-sqlite3",
+    "build": "ncc build src/main.ts -o dist --minify --no-cache",
     "start": "node dist/index.js",
     "login": "node dist/index.js login",
     "test": "vitest",
@@ -37,9 +37,9 @@
     "@types/mozilla__readability": "0.4.2",
     "@vercel/ncc": "^0.38.4",
     "axios": "1.10.0",
-    "better-sqlite3": "^12.8.0",
     "chrome-launcher": "^1.2.1",
     "jsdom": "26.1.0",
+    "lodash-es": "^4.17.23",
     "minimist": "1.2.8",
     "prune": "0.0.2",
     "puppeteer-core": "^24.40.0",
@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@types/better-sqlite3": "^7.6.13",
+    "@types/lodash-es": "^4.17.12",
     "@types/minimist": "1.2.5",
     "@types/node": "22.15.30",
     "@vitest/coverage-v8": "3.2.2",

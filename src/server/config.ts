@@ -6,7 +6,7 @@ export const CONFIG = {
   // Standardized path in user's home directory for cross-session/cross-installation persistence
   BROWSER_DATA_DIR: process.env["PERPLEXITY_BROWSER_DATA_DIR"] || join(homedir(), ".pepe-mcp-session"),
   USE_PERSISTENT_PROFILE: process.env["PERPLEXITY_PERSISTENT_PROFILE"] !== "false",
-  DB_PATH: process.env["PERPLEXITY_DB_PATH"] || join(homedir(), ".pepe-mcp-session", "chat_history.db"),
+  DB_PATH: process.env["PERPLEXITY_DB_PATH"] || join(homedir(), ".pepe-mcp-session", "chat_history.json"),
 
   SEARCH_COOLDOWN: 5000,
   PAGE_TIMEOUT: 180000,
