@@ -1,4 +1,4 @@
-# 🐸 Pepe: Pepe-MCP-Server (Español)
+# 🐸 Pepe-MCP-Server (Español)
 
 Un servidor de investigación de alta densidad que implementa el Protocolo de Contexto de Modelo (MCP) para ofrecer capacidades de investigación potenciadas por IA a través de la interfaz web de Perplexity.
 
