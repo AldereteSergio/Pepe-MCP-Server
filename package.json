@@ -7,7 +7,7 @@
     "pepe": "dist/index.js"
   },
   "scripts": {
-    "build": "ncc build src/main.ts -o dist --minify --no-cache",
+    "build": "node scripts/ncc-build.cjs",
     "start": "node dist/index.js",
     "login": "node dist/index.js login",
     "test": "vitest",
@@ -16,8 +16,7 @@
     "test:watch": "vitest --watch",
     "lint": "biome lint . --write",
     "format": "biome format . --write",
-    "dev": "npm run build && npm run start",
-    "prepare": "npm run build"
+    "dev": "npm run build && npm run start"
   },
   "keywords": [
     "mcp",
