@@ -3,6 +3,8 @@
  */
 import puppeteer, { type Browser, type Page } from "puppeteer-core";
 import { Launcher } from "chrome-launcher";
+import { execFileSync } from "child_process";
+import { accessSync, constants } from "fs";
 import { promises as fs } from "fs";
 import { CONFIG } from "../server/config.js";
 import type { PuppeteerContext, RecoveryContext } from "../types/index.js";
@@ -16,10 +18,89 @@ import {
   getSearchInputSelectors,
 } from "./puppeteer-logic.js";
 
+/** Options for {@link initializeBrowser}. */
+export type InitializeBrowserOptions = {
+  /**
+   * Launch Chrome with this profile directory instead of the default persistent profile.
+   * Used by the CLI `login` flow so a second Chrome can open while the MCP server already
+   * holds the default profile (Chrome allows only one process per user-data dir).
+   */
+  userDataDirOverride?: string;
+};
+
+function canExecute(filePath: string): boolean {
+  try {
+    accessSync(filePath, constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Explicit env override (honoured before chrome-launcher). */
+function resolveEnvChromePath(): string | undefined {
+  for (const key of ["CHROME_PATH", "LIGHTHOUSE_CHROMIUM_PATH"] as const) {
+    const p = process.env[key];
+    if (p && canExecute(p)) {
+      return p;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * On WSL, chrome-launcher only searches Windows chrome.exe paths. If those are empty or
+ * inaccessible (e.g. MCP sandbox), fall back to the Linux Chrome installed in the distro.
+ */
+function findChromeViaWhich(): string | undefined {
+  const candidates = ["google-chrome-stable", "google-chrome", "chromium-browser", "chromium"];
+  for (const name of candidates) {
+    try {
+      const line = execFileSync("which", [name], {
+        stdio: ["ignore", "pipe", "ignore"],
+        encoding: "utf8",
+      })
+        .split(/\r?\n/)[0]
+        ?.trim();
+      if (line && canExecute(line)) {
+        return line;
+      }
+    } catch {
+      /* not in PATH */
+    }
+  }
+  return undefined;
+}
+
+const COMMON_LINUX_CHROME_PATHS = [
+  "/usr/bin/google-chrome-stable",
+  "/usr/bin/google-chrome",
+  "/usr/bin/chromium-browser",
+  "/usr/bin/chromium",
+  "/snap/bin/chromium",
+];
+
+function findChromeByWellKnownPaths(): string | undefined {
+  for (const p of COMMON_LINUX_CHROME_PATHS) {
+    if (canExecute(p)) {
+      return p;
+    }
+  }
+  return undefined;
+}
+
 /**
  * Detects the local Chrome or Edge executable path
  */
 export function getLocalBrowserPath(): string | undefined {
+  const fromEnv = resolveEnvChromePath();
+  if (fromEnv) {
+    const src =
+      process.env["CHROME_PATH"] === fromEnv ? "CHROME_PATH" : "LIGHTHOUSE_CHROMIUM_PATH";
+    logInfo(`Detected browser from ${src}: ${fromEnv}`);
+    return fromEnv;
+  }
+
   try {
     const installations = Launcher.getInstallations();
     if (installations.length > 0) {
@@ -28,6 +109,18 @@ export function getLocalBrowserPath(): string | undefined {
     }
   } catch (error) {
     logWarn(`Failed to detect local browser via chrome-launcher: ${error}`);
+  }
+
+  const fromWhich = findChromeViaWhich();
+  if (fromWhich) {
+    logInfo(`Detected local browser via PATH (WSL/Linux fallback): ${fromWhich}`);
+    return fromWhich;
+  }
+
+  const fromKnown = findChromeByWellKnownPaths();
+  if (fromKnown) {
+    logInfo(`Detected local browser via well-known path (WSL/Linux fallback): ${fromKnown}`);
+    return fromKnown;
   }
 
   // Fallback paths for Windows
@@ -48,7 +141,11 @@ export function getLocalBrowserPath(): string | undefined {
   return undefined;
 }
 
-export async function initializeBrowser(ctx: PuppeteerContext, headless = true) {
+export async function initializeBrowser(
+  ctx: PuppeteerContext,
+  headless = true,
+  options?: InitializeBrowserOptions,
+) {
   if (ctx.isInitializing) {
     logInfo("Browser initialization already in progress...");
     return;
@@ -74,11 +171,18 @@ export async function initializeBrowser(ctx: PuppeteerContext, headless = true) 
       );
     }
 
+    const userDataDir =
+      options?.userDataDirOverride !== undefined
+        ? options.userDataDirOverride || undefined
+        : CONFIG.USE_PERSISTENT_PROFILE
+          ? CONFIG.BROWSER_DATA_DIR
+          : undefined;
+
     const browser = await puppeteer.launch({
       executablePath,
       headless,
       args: browserArgs,
-      userDataDir: CONFIG.USE_PERSISTENT_PROFILE ? CONFIG.BROWSER_DATA_DIR : undefined,
+      userDataDir,
     });
     ctx.setBrowser(browser as any);
     const page = await browser.newPage();
@@ -94,7 +198,9 @@ export async function initializeBrowser(ctx: PuppeteerContext, headless = true) 
     await page.setUserAgent(CONFIG.USER_AGENT);
     page.setDefaultNavigationTimeout(CONFIG.PAGE_TIMEOUT);
 
-    if (CONFIG.USE_PERSISTENT_PROFILE) {
+    if (options?.userDataDirOverride) {
+      logInfo(`Browser initialized with login/temp profile at: ${options.userDataDirOverride}`);
+    } else if (CONFIG.USE_PERSISTENT_PROFILE) {
       logInfo(`Browser initialized with persistent profile at: ${CONFIG.BROWSER_DATA_DIR}`);
     } else {
       logInfo("Browser initialized (anonymous mode)");
