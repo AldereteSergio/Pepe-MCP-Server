@@ -47,82 +47,29 @@ export class SearchEngine implements ISearchEngine {
   }
 
   /**
-   * Sets the full query in the search field without using Puppeteer `type` on raw `\n`:
-   * `page.type` sends Enter for each newline, which submits a partial message on Perplexity.
+   * Puppeteer `page.type` envía Enter por cada `\n`, lo que dispara envíos parciales en Perplexity.
+   * Se reemplazan saltos de línea por el literal ` /n ` (una sola línea al teclear); el modelo suele leerlo como separación de bloques.
    */
+  private normalizeQueryForTypedTransport(query: string): string {
+    return query.replace(/\r\n/g, "\n").replace(/\n+/g, " /n ").trim();
+  }
+
   private async executeSearch(page: Page, selector: string, query: string): Promise<void> {
-    await page.click(selector, { clickCount: 1 }).catch(() => {});
-    const filled = await this.setSearchInputValueInPage(page, selector, query);
-    if (!filled) {
-      await this.typeQueryRespectingLineBreaks(page, selector, query);
-    }
-    await page.keyboard.press("Enter");
-  }
-
-  /** Returns true if the value was applied in-page (textarea, input, or contenteditable). */
-  private async setSearchInputValueInPage(page: Page, selector: string, query: string): Promise<boolean> {
-    const result = await page.evaluate((sel, text) => {
-      const el = document.querySelector(sel) as HTMLElement | null;
-      if (!el) return false;
-
-      el.focus();
-
-      if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
-        const proto =
-          el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
-        const setter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
-        if (setter) {
-          setter.call(el, text);
-        } else {
-          el.value = text;
-        }
-        el.dispatchEvent(new Event("input", { bubbles: true }));
-        el.dispatchEvent(new Event("change", { bubbles: true }));
-        return true;
-      }
-
-      if (el.isContentEditable || el.getAttribute("role") === "textbox") {
-        el.textContent = text;
-        try {
-          el.dispatchEvent(
-            new InputEvent("input", { bubbles: true, inputType: "insertFromPaste", data: null }),
-          );
-        } catch {
-          el.dispatchEvent(new Event("input", { bubbles: true }));
-        }
-        return true;
-      }
-
-      return false;
-    }, selector, query);
-
-    return result === true;
-  }
-
-  /** Fallback: type character-by-character; newlines → Shift+Enter (newline) instead of Enter (submit). */
-  private async typeQueryRespectingLineBreaks(page: Page, selector: string, query: string): Promise<void> {
+    const payload = this.normalizeQueryForTypedTransport(query);
     try {
+      await page.evaluate((sel) => {
+        const input = document.querySelector(sel) as HTMLTextAreaElement | null;
+        if (input) input.value = "";
+      }, selector);
       await page.click(selector, { clickCount: 3 });
       await page.keyboard.press("Backspace");
     } catch {
       /* ignore */
     }
 
-    await page.focus(selector).catch(() => {});
-
     const typeDelay = Math.floor(Math.random() * 20) + 20;
-    for (const char of query) {
-      if (char === "\n") {
-        await page.keyboard.down("Shift");
-        await page.keyboard.press("Enter");
-        await page.keyboard.up("Shift");
-        await new Promise((r) => setTimeout(r, typeDelay));
-      } else if (char === "\r") {
-        continue;
-      } else {
-        await page.keyboard.type(char, { delay: typeDelay });
-      }
-    }
+    await page.type(selector, payload, { delay: typeDelay });
+    await page.keyboard.press("Enter");
   }
 
   private async waitForCompleteAnswer(page: Page): Promise<string> {
