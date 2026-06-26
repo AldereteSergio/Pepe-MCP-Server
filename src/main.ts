@@ -19,6 +19,7 @@ const CHROME_PROFILE_SKIP_NAMES = new Set([
     "SingletonCookie",
     "SingletonSocket",
 ]);
+const CHAT_HISTORY_FILENAME = "chat_history.json";
 const execFileAsync = promisify(execFile);
 /** Env var used to pass profile paths into PowerShell without embedding user data in the script. */
 const PEPE_PROFILE_PATH_ENV = "PEPE_PROFILE_PATH";
@@ -85,29 +86,36 @@ async function forceCloseWindowsProcessesUsingPath(path: string): Promise<number
     return pids.length;
 }
 
-/** Replace persistent profile with a fresh Chrome profile from login, keeping chat_history.json if present. */
-async function promoteLoginProfile(fromTempDir: string, targetDir: string): Promise<void> {
-    const chatName = "chat_history.json";
-    const chatPath = join(targetDir, chatName);
-    let chatBackup: Buffer | null = null;
-    if (existsSync(chatPath)) {
-        chatBackup = await readFile(chatPath);
+async function readChatHistoryBackup(targetDir: string): Promise<Buffer | null> {
+    const chatPath = join(targetDir, CHAT_HISTORY_FILENAME);
+    if (!existsSync(chatPath)) {
+        return null;
     }
+    return readFile(chatPath);
+}
+
+/** Replace persistent profile with a fresh Chrome profile from login, keeping chat_history.json if present. */
+async function promoteLoginProfile(
+    fromTempDir: string,
+    targetDir: string,
+    chatBackup: Buffer | null,
+): Promise<void> {
     await rm(targetDir, { recursive: true, force: true });
     await cp(fromTempDir, targetDir, {
         recursive: true,
         filter: (source) => shouldCopyProfileEntry(source),
     });
     if (chatBackup) {
-        await writeFile(join(targetDir, chatName), chatBackup);
+        await writeFile(join(targetDir, CHAT_HISTORY_FILENAME), chatBackup);
     }
-    await rm(fromTempDir, { recursive: true, force: true });
 }
 
 async function promoteLoginProfileWithRetry(fromTempDir: string, targetDir: string): Promise<void> {
+    const chatBackup = await readChatHistoryBackup(targetDir);
     for (let attempt = 1; attempt <= PROFILE_PROMOTION_MAX_ATTEMPTS; attempt++) {
         try {
-            await promoteLoginProfile(fromTempDir, targetDir);
+            await promoteLoginProfile(fromTempDir, targetDir, chatBackup);
+            await rm(fromTempDir, { recursive: true, force: true });
             return;
         } catch (error) {
             if (!isProfileLockError(error) || attempt === PROFILE_PROMOTION_MAX_ATTEMPTS) {
