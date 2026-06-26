@@ -1,14 +1,81 @@
 #!/usr/bin/env node
+import { execFile } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
 import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
+import { promisify } from "node:util";
 import { CONFIG } from "./server/config.js";
 import { initializeBrowser } from "./utils/puppeteer.js";
 import type { PuppeteerContext } from "./types/index.js";
 import { PerplexityServer } from "./server/PerplexityServer.js";
 
 const PERPLEXITY_URL = "https://www.perplexity.ai";
+const PROFILE_PROMOTION_MAX_ATTEMPTS = 4;
+/** Chrome lock/socket files — removed or broken when the browser closes; safe to skip when promoting profile. */
+const CHROME_PROFILE_SKIP_NAMES = new Set([
+    "lockfile",
+    "SingletonLock",
+    "SingletonCookie",
+    "SingletonSocket",
+]);
+const execFileAsync = promisify(execFile);
+
+function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isProfileLockError(error: unknown): boolean {
+    if (!error || typeof error !== "object") return false;
+    const err = error as NodeJS.ErrnoException;
+    return (
+        err.code === "EBUSY" ||
+        err.code === "EPERM" ||
+        err.code === "EACCES" ||
+        err.code === "ENOENT"
+    );
+}
+
+function shouldCopyProfileEntry(sourcePath: string): boolean {
+    return !CHROME_PROFILE_SKIP_NAMES.has(basename(sourcePath));
+}
+
+function escapePowerShellSingleQuotedString(value: string): string {
+    return value.replace(/'/g, "''");
+}
+
+async function findWindowsProcessesUsingPath(path: string): Promise<number[]> {
+    const escapedPath = escapePowerShellSingleQuotedString(path);
+    const command = `$ErrorActionPreference='SilentlyContinue'; Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine -like '*${escapedPath}*' } | ForEach-Object { $_.ProcessId }`;
+    try {
+        const { stdout } = await execFileAsync(
+            "powershell.exe",
+            ["-NoProfile", "-Command", command],
+            { windowsHide: true, encoding: "utf8" },
+        );
+        return stdout
+            .split(/\r?\n/)
+            .map((line) => Number.parseInt(line.trim(), 10))
+            .filter((pid) => Number.isInteger(pid) && pid > 0 && pid !== process.pid);
+    } catch {
+        return [];
+    }
+}
+
+async function forceCloseWindowsProcessesUsingPath(path: string): Promise<number> {
+    if (process.platform !== "win32") return 0;
+    const pids = [...new Set(await findWindowsProcessesUsingPath(path))];
+    if (pids.length === 0) return 0;
+
+    const taskKillArgs = ["/T", "/F", ...pids.flatMap((pid) => ["/PID", String(pid)])];
+    try {
+        await execFileAsync("taskkill", taskKillArgs, { windowsHide: true, encoding: "utf8" });
+    } catch {
+        // Some PIDs may already be closed by the time taskkill runs.
+    }
+
+    return pids.length;
+}
 
 /** Replace persistent profile with a fresh Chrome profile from login, keeping chat_history.json if present. */
 async function promoteLoginProfile(fromTempDir: string, targetDir: string): Promise<void> {
@@ -19,11 +86,42 @@ async function promoteLoginProfile(fromTempDir: string, targetDir: string): Prom
         chatBackup = await readFile(chatPath);
     }
     await rm(targetDir, { recursive: true, force: true });
-    await cp(fromTempDir, targetDir, { recursive: true });
+    await cp(fromTempDir, targetDir, {
+        recursive: true,
+        filter: (source) => shouldCopyProfileEntry(source),
+    });
     if (chatBackup) {
         await writeFile(join(targetDir, chatName), chatBackup);
     }
     await rm(fromTempDir, { recursive: true, force: true });
+}
+
+async function promoteLoginProfileWithRetry(fromTempDir: string, targetDir: string): Promise<void> {
+    for (let attempt = 1; attempt <= PROFILE_PROMOTION_MAX_ATTEMPTS; attempt++) {
+        try {
+            await promoteLoginProfile(fromTempDir, targetDir);
+            return;
+        } catch (error) {
+            if (!isProfileLockError(error) || attempt === PROFILE_PROMOTION_MAX_ATTEMPTS) {
+                throw error;
+            }
+
+            if (process.platform === "win32" && attempt >= 2) {
+                const closedCount = await forceCloseWindowsProcessesUsingPath(targetDir);
+                if (closedCount > 0) {
+                    console.warn(
+                        `⚠️  Profile dir is locked. Closed ${closedCount} process(es) using ${targetDir} before retrying...`,
+                    );
+                }
+            }
+
+            const retryDelayMs = attempt * 1000;
+            console.warn(
+                `⚠️  Profile promotion hit a lock (${attempt}/${PROFILE_PROMOTION_MAX_ATTEMPTS}). Retrying in ${retryDelayMs}ms...`,
+            );
+            await sleep(retryDelayMs);
+        }
+    }
 }
 
 async function runLogin() {
@@ -86,14 +184,17 @@ async function runLogin() {
             (mockCtx.browser as any)?.on("disconnected", () => resolve());
         });
 
+        // Let Chrome finish tearing down lock files before copying the profile.
+        await sleep(1500);
+
         try {
-            await promoteLoginProfile(loginTempDir, profileDir);
+            await promoteLoginProfileWithRetry(loginTempDir, profileDir);
             loginPromoted = true;
         } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
             console.error(
                 `\n⚠️  Could not copy login profile to ${profileDir}: ${msg}
-    Close Pepe MCP / other Chrome using that folder and run: npm run login
+    Automatic retries/cleanup were attempted. Close Pepe MCP / other Chrome using that folder and run: npm run login
 `,
             );
             throw e;
