@@ -20,6 +20,8 @@ const CHROME_PROFILE_SKIP_NAMES = new Set([
     "SingletonSocket",
 ]);
 const execFileAsync = promisify(execFile);
+/** Env var used to pass profile paths into PowerShell without embedding user data in the script. */
+const PEPE_PROFILE_PATH_ENV = "PEPE_PROFILE_PATH";
 
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -40,18 +42,24 @@ function shouldCopyProfileEntry(sourcePath: string): boolean {
     return !CHROME_PROFILE_SKIP_NAMES.has(basename(sourcePath));
 }
 
-function escapePowerShellSingleQuotedString(value: string): string {
-    return value.replace(/'/g, "''");
-}
-
 async function findWindowsProcessesUsingPath(path: string): Promise<number[]> {
-    const escapedPath = escapePowerShellSingleQuotedString(path);
-    const command = `$ErrorActionPreference='SilentlyContinue'; Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine -like '*${escapedPath}*' } | ForEach-Object { $_.ProcessId }`;
+    const command = [
+        "$ErrorActionPreference = 'SilentlyContinue'",
+        `$profilePath = $env:${PEPE_PROFILE_PATH_ENV}`,
+        "if (-not $profilePath) { exit 1 }",
+        "Get-CimInstance Win32_Process",
+        "| Where-Object { $_.CommandLine -and $_.CommandLine.Contains($profilePath) }",
+        "| ForEach-Object { $_.ProcessId }",
+    ].join("; ");
     try {
         const { stdout } = await execFileAsync(
             "powershell.exe",
             ["-NoProfile", "-Command", command],
-            { windowsHide: true, encoding: "utf8" },
+            {
+                windowsHide: true,
+                encoding: "utf8",
+                env: { ...process.env, [PEPE_PROFILE_PATH_ENV]: path },
+            },
         );
         return stdout
             .split(/\r?\n/)
